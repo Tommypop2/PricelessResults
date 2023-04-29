@@ -17,7 +17,7 @@ import "./main.css";
 import Navbar from "./components/Navbar";
 export default function Root() {
 	return (
-		<Html lang="en" class="h-full w-full dark">
+		<Html lang="en" class="h-full w-full dark font-[source-sans]">
 			<Head>
 				<Title>Priceless Results</Title>
 				<Meta charset="utf-8" />
