@@ -1,13 +1,21 @@
-import { For } from "solid-js";
+import { For, onMount } from "solid-js";
 import { A } from "solid-start";
+import { useNavbarContext } from "~/context/NavbarProvider";
 interface NavbarProps {
 	options: NavbarOption[];
 }
 export default function Navbar(props: NavbarProps) {
+	const ctx = useNavbarContext();
+	let navbar: HTMLDivElement | undefined;
+	onMount(() => {
+		if (!navbar) return;
+		ctx.setNavbar(navbar);
+	});
 	return (
 		<div
 			class={`flex flex-row w-full h-full gap-1 m-0 p-0 bg-gradient animate-gradient`}
 			id="navbar"
+			ref={navbar}
 		>
 			<For each={props.options}>
 				{(item, index) => {

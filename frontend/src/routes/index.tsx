@@ -1,9 +1,12 @@
-import { onMount } from "solid-js";
+import { createEffect, onMount } from "solid-js";
+import { useNavbarContext } from "~/context/NavbarProvider";
 export default function Home() {
 	let header: HTMLHeadingElement | undefined;
+	const ctx = useNavbarContext();
 	// Sync animation to navbar
-	onMount(() => {
-		const navbar = document.getElementById("navbar")!;
+	createEffect(() => {
+		const navbar = ctx.navbar();
+		if (!navbar) return;
 		const navbarStartTime = navbar.getAnimations()[0].startTime;
 		header!.getAnimations()[0].startTime = navbarStartTime
 			? navbarStartTime
