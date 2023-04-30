@@ -5,7 +5,7 @@ export default function Home() {
 	const ctx = useNavbarContext();
 	// Sync animation to navbar
 	createEffect(() => {
-		const navbar = ctx.navbar();
+		const navbar = ctx.navbarRef();
 		if (!navbar) return;
 		const navbarStartTime = navbar.getAnimations()[0].startTime;
 		header!.getAnimations()[0].startTime = navbarStartTime

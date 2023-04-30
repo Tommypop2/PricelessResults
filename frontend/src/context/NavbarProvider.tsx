@@ -6,17 +6,21 @@ import {
 	createSignal,
 	useContext,
 } from "solid-js";
-
 const NavbarContext = createContext<{
-	navbar: Accessor<HTMLDivElement | undefined>;
-	setNavbar: Setter<HTMLDivElement | undefined>;
+	navbarRef: Accessor<HTMLDivElement | undefined>;
+	setNavbarRef: Setter<HTMLDivElement | undefined>;
+	options: Accessor<NavbarOption[] | undefined>;
+	setOptions: Setter<NavbarOption[] | undefined>;
 }>();
 
 export const NavbarProvider: ParentComponent = (props) => {
-	const [navbar, setNavbar] = createSignal<HTMLDivElement | undefined>();
+	const [navbarRef, setNavbarRef] = createSignal<HTMLDivElement | undefined>();
+	const [options, setOptions] = createSignal<NavbarOption[]>();
 	const value = {
-		navbar,
-		setNavbar,
+		navbarRef,
+		setNavbarRef,
+		options,
+		setOptions,
 	};
 	return (
 		<NavbarContext.Provider value={value}>
