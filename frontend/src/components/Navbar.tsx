@@ -26,14 +26,14 @@ export default function Navbar(props: NavbarProps) {
 					);
 				}}
 			</For>
-			<button
+			{/* <button
 				class="ml-auto rounded mr-5 px-5 text-lg border-blue"
 				onclick={() => {
 					console.log("This works");
 				}}
 			>
 				Login
-			</button>
+			</button> */}
 		</div>
 	);
 }

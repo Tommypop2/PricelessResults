@@ -3,7 +3,6 @@ import presetWind from "@unocss/preset-wind";
 
 export default defineConfig({
 	theme: {
-		fontFamily: {"source-sans": "/SourceSansPro-Regular.ttf"},
 		animation: {
 			keyframes: {
 				gradient: `

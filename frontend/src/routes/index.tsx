@@ -5,25 +5,26 @@ export default function Home() {
 	onMount(() => {
 		const navbar = document.getElementById("navbar")!;
 		const navbarStartTime = navbar.getAnimations()[0].startTime;
-		header!.getAnimations()[0].startTime = navbarStartTime;
+		header!.getAnimations()[0].startTime = navbarStartTime
+			? navbarStartTime
+			: 0;
 	});
 	return (
-		<main class="w-full h-[95%]">
-			<div class="w-full flex flex-row justify-center h-full items-center">
-				<div>
+		<main class="w-full h-full">
+			<div class="w-full flex flex-row justify-center h-full sm:items-center <sm:text-center">
+				<div class="sm:hover:animate-head-shake">
 					<h1
-						class={`clip-text text-9xl select-none animate-gradient bg-gradient`}
+						class={`clip-text text-9xl <sm:text-8xl select-none animate-gradient bg-gradient relative z-2`}
 						ref={header}
 					>
 						Priceless Results
 					</h1>
 				</div>
 			</div>
-			<div class="absolute right-1 bottom-1">
+			<div class="absolute right-1 bottom-1 <sm:flex <sm:flex-row <sm:items-center <sm:justify-center <sm:w-full <sm:bottom-16 <sm:right-0">
 				<div
-					class="absolute w-full h-full z-[-1]"
+					class="absolute w-full h-full z-[-1] animate-pulse animate-duration-[5s] hover:animate-paused"
 					style={{
-						opacity: "0.8",
 						"background-image":
 							"linear-gradient(-120deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)",
 						"border-radius": "50%",
@@ -33,7 +34,12 @@ export default function Home() {
 						left: "50%",
 					}}
 				/>
-				<img src="android-chrome-512x512.png" class="relative"></img>
+				<img
+					src="512x512.webp"
+					class="relative hover:animate-pulse w-[400px] h-[400px] <sm:w-[100%] <sm:h-[auto] object-cover"
+					draggable={false}
+					alt="Logo"
+				></img>
 			</div>
 		</main>
 	);
