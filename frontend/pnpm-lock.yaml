@@ -7,6 +7,9 @@ dependencies:
   '@solidjs/router':
     specifier: ^0.8.2
     version: 0.8.2(solid-js@1.7.3)
+  solid-icons:
+    specifier: ^1.0.4
+    version: 1.0.4(solid-js@1.7.3)
   solid-js:
     specifier: ^1.7.3
     version: 1.7.3
@@ -2999,6 +3002,15 @@ packages:
       '@polka/url': 1.0.0-next.21
       mrmime: 1.0.1
       totalist: 3.0.1
+
+  /solid-icons@1.0.4(solid-js@1.7.3):
+    resolution: {integrity: sha512-gJTp4in3+OYCs9WvDkSLt4Los2unR3Uoder8wjh15GsfP20xiNOLfPTJllXmn+fI8+k3x7bRYtLGIgWd9fUQug==}
+    engines: {node: '>= 16'}
+    peerDependencies:
+      solid-js: '*'
+    dependencies:
+      solid-js: 1.7.3
+    dev: false
 
   /solid-js@1.7.3:
     resolution: {integrity: sha512-4hwaF/zV/xbNeBBIYDyu3dcReOZBECbO//mrra6GqOrKy4Soyo+fnKjpZSa0nODm6j1aL0iQRh/7ofYowH+jzw==}

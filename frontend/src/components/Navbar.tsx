@@ -17,7 +17,7 @@ export default function Navbar(props: NavbarProps) {
 								href={item.href}
 								class="inline-flex items-center m-0 px-5 py-3 rounded-t no-underline"
 								activeClass="bg-dark text-white"
-								inactiveClass="bg-white text-dark"
+								inactiveClass="bg-white text-dark hover:bg-light-600"
 								end={true}
 							>
 								<span class="text-lg">{item.name}</span>
