@@ -14,11 +14,10 @@ export default function Navbar(props: NavbarProps) {
 	return (
 		<div
 			class={`flex flex-row w-full h-full gap-1 m-0 p-0 bg-gradient animate-gradient`}
-			id="navbar"
 			ref={navbar}
 		>
 			<For each={props.options}>
-				{(item, index) => {
+				{(item) => {
 					return (
 						<div class="h-full flex">
 							<A

@@ -1,4 +1,4 @@
-import { createEffect, onMount } from "solid-js";
+import { createEffect } from "solid-js";
 import { useNavbarContext } from "~/context/NavbarProvider";
 export default function Home() {
 	let header: HTMLHeadingElement | undefined;
