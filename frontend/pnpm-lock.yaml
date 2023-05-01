@@ -10,6 +10,9 @@ dependencies:
   apexcharts:
     specifier: ^3.40.0
     version: 3.40.0
+  oauth4webapi:
+    specifier: ^2.3.0
+    version: 2.3.0
   solid-apexcharts:
     specifier: ^0.2.4
     version: 0.2.4(apexcharts@3.40.0)(solid-js@1.7.3)
@@ -2763,6 +2766,10 @@ packages:
     dependencies:
       path-key: 3.1.1
     dev: true
+
+  /oauth4webapi@2.3.0:
+    resolution: {integrity: sha512-JGkb5doGrwzVDuHwgrR4nHJayzN4h59VCed6EW8Tql6iHDfZIabCJvg6wtbn5q6pyB2hZruI3b77Nudvq7NmvA==}
+    dev: false
 
   /ofetch@1.0.1:
     resolution: {integrity: sha512-icBz2JYfEpt+wZz1FRoGcrMigjNKjzvufE26m9+yUiacRQRHwnNlGRPiDnW4op7WX/MR6aniwS8xw8jyVelF2g==}
