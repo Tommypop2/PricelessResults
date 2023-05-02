@@ -15,6 +15,17 @@ function generateRandomString(length: number) {
 	}
 	return result;
 }
+async function waitForGoogleLoad() {
+	// Return if script is already loaded
+	if (typeof google != "undefined") return;
+	// Else, wait for the script tag to load
+	const element = document.getElementById("googleScript")!;
+	return await new Promise<void>((res, rej) => {
+		element.onload = () => {
+			res();
+		};
+	});
+}
 export default function Navbar(props: NavbarProps) {
 	const navCtx = useNavbarContext();
 	let navbar: HTMLDivElement | undefined;
@@ -26,13 +37,20 @@ export default function Navbar(props: NavbarProps) {
 	});
 	const themeCtx = useThemeContext();
 	const isDark = () => themeCtx.theme() === "dark";
-	onMount(() => {
+	onMount(async () => {
 		if (!loginWithGoogleButton) return;
+		await waitForGoogleLoad();
 		google.accounts.id.initialize({
 			client_id:
 				"840942651861-i3g0m9jvt8j0js61ik1i54at9p8m7v9s.apps.googleusercontent.com",
-			callback: (response: any) => {
-				console.log(response);
+			nonce: generateRandomString(64),
+			callback: (response: google.accounts.id.CredentialResponse) => {
+				fetch(
+					"https://oauth2.googleapis.com/tokeninfo?id_token=" +
+						response.credential
+				).then((res) => {
+					res.json().then((json) => console.log(json));
+				});
 			},
 		});
 		google.accounts.id.renderButton(loginWithGoogleButton, {
@@ -41,6 +59,7 @@ export default function Navbar(props: NavbarProps) {
 			shape: "square",
 			type: "icon",
 		});
+		google.accounts.id.prompt();
 	});
 	return (
 		<div
@@ -88,7 +107,7 @@ export default function Navbar(props: NavbarProps) {
 
 				<div
 					ref={loginWithGoogleButton}
-					class="flex justify-center flex-col"
+					class="flex justify-center flex-col h-full w-[40px]"
 				></div>
 				{/* <button
 					class="rounded mr-5 px-5 text-lg border-blue"

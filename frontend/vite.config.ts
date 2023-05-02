@@ -1,6 +1,7 @@
 import solid from "solid-start/vite";
 import { defineConfig } from "vite";
 import UnoCss from "unocss/vite";
+import vercel from "solid-start-vercel";
 export default defineConfig({
-	plugins: [solid(), UnoCss()],
+	plugins: [solid({ adapter: vercel({ edge: true }) }), UnoCss()],
 });

@@ -7,8 +7,8 @@ import {
 	useContext,
 } from "solid-js";
 type User = {
-	userId: string;
 	userName: string;
+	userId: string;
 };
 const UserContext = createContext<{
 	user: Accessor<User | undefined>;

@@ -29,6 +29,7 @@ export default function Root() {
 					src="https://accounts.google.com/gsi/client"
 					async
 					defer
+					id="googleScript"
 				></script>
 
 				{/* <Link rel="preload" as="font" href="/SourceSansPro-Regular.ttf" crossOrigin="anonymous" /> */}
