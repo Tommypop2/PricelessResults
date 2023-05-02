@@ -68,8 +68,7 @@ async fn login(data: web::Data<AppState>, json: web::Json<LoginInfo>) -> HttpRes
     let client = AsyncClient::new(&data.oauth_clientid);
     let data = client.validate_id_token(&json.id_token).await;
     if data.is_err() {
-        return HttpResponse::Ok()
-            .body("Invalid Token");
+        return HttpResponse::Ok().body("Invalid Token");
     }
     println!("{}", generateRandomString(64));
     let id = data.unwrap().sub;
