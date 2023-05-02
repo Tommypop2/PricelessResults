@@ -22,7 +22,7 @@ export const ThemeProvider: ParentComponent = (props) => {
 	const userTheme = parseCookie(
 		isServer ? event.request.headers.get("cookie") ?? "" : document.cookie
 	)["theme"] as Theme;
-	const [theme, setTheme] = createSignal<Theme>((userTheme) ?? "dark");
+	const [theme, setTheme] = createSignal<Theme>(userTheme ?? "dark");
 	const value = {
 		theme,
 		setTheme,
@@ -31,7 +31,8 @@ export const ThemeProvider: ParentComponent = (props) => {
 		on(
 			theme,
 			(newTheme) => {
-				document.cookie = `theme=${newTheme};max-age=86400;`;
+				const maxAge = 365 * 24 * 60 * 60;
+				document.cookie = `theme=${newTheme};max-age=${maxAge};`;
 			},
 			{ defer: true }
 		)

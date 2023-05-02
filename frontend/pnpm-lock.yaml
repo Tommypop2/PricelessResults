@@ -10,9 +10,6 @@ dependencies:
   apexcharts:
     specifier: ^3.40.0
     version: 3.40.0
-  oauth4webapi:
-    specifier: ^2.3.0
-    version: 2.3.0
   solid-apexcharts:
     specifier: ^0.2.4
     version: 0.2.4(apexcharts@3.40.0)(solid-js@1.7.3)
@@ -30,6 +27,9 @@ dependencies:
     version: 5.22.0
 
 devDependencies:
+  '@types/google.accounts':
+    specifier: ^0.0.7
+    version: 0.0.7
   '@types/node':
     specifier: ^18.16.3
     version: 18.16.3
@@ -1560,6 +1560,10 @@ packages:
   /@types/estree@1.0.1:
     resolution: {integrity: sha512-LG4opVs2ANWZ1TJoKc937iMmNstM/d0ae1vNbnBvBhqCSezgVUOzcLCqbI5elV8Vy6WKwKjaqR+zO9VKirBBCA==}
 
+  /@types/google.accounts@0.0.7:
+    resolution: {integrity: sha512-AAA2+/s/Oa9ETgaWY6JM2P3h8RiQ1FkdyI7QYKMY3hbIkwGbjEBLX0L6FpazVxHnq68ruDyl8Fi5v0tEwSyfeg==}
+    dev: true
+
   /@types/node@18.16.3:
     resolution: {integrity: sha512-OPs5WnnT1xkCBiuQrZA4+YAV4HEJejmHneyraIaxsbev5yCEr6KMwINNFP9wQeFIw8FWcoTqF3vQsa5CDaI+8Q==}
 
@@ -2766,10 +2770,6 @@ packages:
     dependencies:
       path-key: 3.1.1
     dev: true
-
-  /oauth4webapi@2.3.0:
-    resolution: {integrity: sha512-JGkb5doGrwzVDuHwgrR4nHJayzN4h59VCed6EW8Tql6iHDfZIabCJvg6wtbn5q6pyB2hZruI3b77Nudvq7NmvA==}
-    dev: false
 
   /ofetch@1.0.1:
     resolution: {integrity: sha512-icBz2JYfEpt+wZz1FRoGcrMigjNKjzvufE26m9+yUiacRQRHwnNlGRPiDnW4op7WX/MR6aniwS8xw8jyVelF2g==}
