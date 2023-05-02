@@ -17,11 +17,10 @@ use surrealdb::sql::Thing;
 struct AppState {
     surreal: SurrealDBRepo,
     oauth_clientid: String,
-    oauth_client_secret: String,
 }
 #[derive(Debug, Serialize)]
 struct EpicThing<'a> {
-    faxNoCap: bool,
+    coolBoolean: bool,
     yes: &'a str,
 }
 #[derive(Debug, Deserialize)]
@@ -29,8 +28,14 @@ struct Record {
     #[allow(dead_code)]
     id: Thing,
 }
+
+#[derive(Serialize, Deserialize)]
+struct Session {
+    session_id: String,
+    user_id: String,
+}
 const CHARACTERS: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-fn generateRandomString(length: i32) -> String {
+fn generate_random_string(length: i32) -> String {
     let mut rng = rand::thread_rng();
     let mut result: String = "".into();
     let chars_len = CHARACTERS.len();
@@ -47,7 +52,7 @@ async fn index(data: web::Data<AppState>) -> String {
         .db
         .create("coolthing")
         .content(EpicThing {
-            faxNoCap: true,
+            coolBoolean: true,
             yes: "asd",
         })
         .await
@@ -63,18 +68,39 @@ async fn index(data: web::Data<AppState>) -> String {
 struct LoginInfo {
     id_token: String,
 }
+struct User {
+    id: String,
+    username: String,
+}
 #[post("/login")]
-async fn login(data: web::Data<AppState>, json: web::Json<LoginInfo>) -> HttpResponse {
-    let client = AsyncClient::new(&data.oauth_clientid);
+async fn login(shared_data: web::Data<AppState>, json: web::Json<LoginInfo>) -> HttpResponse {
+    let client = AsyncClient::new(&shared_data.oauth_clientid);
     let data = client.validate_id_token(&json.id_token).await;
     if data.is_err() {
         return HttpResponse::Ok().body("Invalid Token");
     }
-    println!("{}", generateRandomString(64));
-    let id = data.unwrap().sub;
-    println!("{}, {}", json.id_token, id);
+    let google_id = data.unwrap().sub;
+    let query = format!("SELECT count(id = {}) AS total FROM user;", google_id);
+    dbg!(&query);
+    let result = shared_data
+        .surreal
+        .db
+        .query(query)
+        .await;
+    dbg!(result.unwrap());
+    let session_id = generate_random_string(64);
+    let created: Record = shared_data
+        .surreal
+        .db
+        .create("session")
+        .content(Session {
+            session_id: session_id.clone(),
+            user_id: google_id,
+        })
+        .await
+        .unwrap();
     HttpResponse::Ok()
-        .cookie(Cookie::new("token", &json.id_token))
+        .cookie(Cookie::new("sessionId", session_id))
         .body("yes")
     // return "".into();
 }
@@ -84,8 +110,7 @@ async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
     dotenv().ok();
-    let client_id = std::env::var("clientId").expect("clientId variable should be set");
-    let client_secret = std::env::var("clientSecret").expect("clientSecret variable should be set");
+    let client_id = std::env::var("client_id").expect("client_id variable should be set");
     let db_url = std::env::var("db_url").expect("db_url variable should be set");
     let surreal = SurrealDBRepo::init(&db_url)
         .await
@@ -95,7 +120,6 @@ async fn main() -> std::io::Result<()> {
     let surreal_data = Data::new(AppState {
         surreal,
         oauth_clientid: client_id,
-        oauth_client_secret: client_secret,
     });
     HttpServer::new(move || {
         // let cors = Cors::default().allowed_origin("http://localhost:5173");

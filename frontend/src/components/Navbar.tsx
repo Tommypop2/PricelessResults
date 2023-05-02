@@ -45,12 +45,9 @@ export default function Navbar(props: NavbarProps) {
 				"840942651861-i3g0m9jvt8j0js61ik1i54at9p8m7v9s.apps.googleusercontent.com",
 			nonce: generateRandomString(64),
 			callback: async (response: google.accounts.id.CredentialResponse) => {
-				// const res = await (await fetch(
-				// 	"https://oauth2.googleapis.com/tokeninfo?id_token=" +
-				// 		response.credential
-				// )).json();
 				console.log(response.credential);
 				const res = fetch(`${import.meta.env.VITE_SERVER_URI}/login`, {
+					credentials: "include",
 					method: "post",
 					headers: {
 						"Content-Type": "application/json",
