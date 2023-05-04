@@ -1,10 +1,8 @@
 use actix_web::{
-    cookie::{time::Duration, Cookie, SameSite},
     get,
-    http::{header::ContentType, StatusCode},
     post,
     web::{self, Data},
-    App, HttpResponse, HttpServer, Responder,
+    App, HttpServer, Responder,
 };
 mod db;
 mod user;
@@ -15,7 +13,7 @@ use google_oauth::AsyncClient;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use surrealdb::{
-    sql::{self, Object, Thing},
+    sql::{Thing},
     Response,
 };
 use user::user::create_routes;
@@ -133,7 +131,7 @@ async fn login(
         usr
     };
     let session_id = generate_random_string(64);
-    let created: Record = shared_data
+    let _created: Record = shared_data
         .surreal
         .db
         .create("session")
@@ -205,7 +203,7 @@ async fn get_user(
 #[derive(Serialize)]
 struct TestRouteResult {}
 #[get("/test_route")]
-async fn test_route(shared_data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
+async fn test_route(_shared_data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
     Ok(web::Json(TestRouteResult {}))
 }
 #[actix_web::main]

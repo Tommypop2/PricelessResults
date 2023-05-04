@@ -1,9 +1,8 @@
-use std::sync::Arc;
 use surrealdb::engine::remote::ws::{Client, Ws};
 use surrealdb::opt::auth::Root;
 use surrealdb::sql::Value;
 use surrealdb::Surreal;
-use surrealdb::{dbs::Session, kvs::Datastore, Error};
+use surrealdb::{Error};
 
 pub trait Creatable: Into<Value> {}
 pub trait Patchable: Into<Value> {}
