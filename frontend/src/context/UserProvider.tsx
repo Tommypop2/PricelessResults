@@ -4,6 +4,7 @@ import {
 	Resource,
 	Setter,
 	createContext,
+	createMemo,
 	createResource,
 	createSignal,
 	useContext,
@@ -27,15 +28,16 @@ export const UserProvider: ParentComponent = (props) => {
 		const event = useRequest();
 		const sessionId = parseCookie(
 			isServer ? event.request.headers.get("cookie") ?? "" : document.cookie
-		)["sessionId"];
+		)["session_id"];
 		if (!sessionId) return;
-		const user = (await (
-			await fetch(
-				`${import.meta.env.VITE_SERVER_URI}/getuser?sessionId=${sessionId}`
-			)
-		).json()) as User;
-		console.log(user);
-		return user;
+		const res = await fetch(
+			`${import.meta.env.VITE_SERVER_URI}/getuser?session_id=${sessionId}`
+		);
+		const userJson = await res.json();
+		if (userJson["success"] == false) {
+			return;
+		}
+		return userJson as User;
 	});
 	const value = {
 		user,

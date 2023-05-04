@@ -1,8 +1,9 @@
-import { For, Show, onMount } from "solid-js";
+import { For, Show, Suspense, onMount } from "solid-js";
 import { A } from "solid-start";
 import { useNavbarContext } from "~/context/NavbarProvider";
 import { BsMoon, BsSun } from "solid-icons/bs";
 import { useThemeContext } from "~/context/ThemeProvider";
+import { useUserContext } from "~/context/UserProvider";
 interface NavbarProps {
 	options?: NavbarOption[];
 }
@@ -37,6 +38,8 @@ export default function Navbar(props: NavbarProps) {
 	});
 	const themeCtx = useThemeContext();
 	const isDark = () => themeCtx.theme() === "dark";
+
+	const userCtx = useUserContext();
 	onMount(async () => {
 		if (!loginWithGoogleButton) return;
 		await waitForGoogleLoad();
@@ -45,15 +48,22 @@ export default function Navbar(props: NavbarProps) {
 				"840942651861-i3g0m9jvt8j0js61ik1i54at9p8m7v9s.apps.googleusercontent.com",
 			nonce: generateRandomString(64),
 			callback: async (response: google.accounts.id.CredentialResponse) => {
-				console.log(response.credential);
-				const res = fetch(`${import.meta.env.VITE_SERVER_URI}/login`, {
-					credentials: "include",
-					method: "post",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ id_token: response.credential }),
-				});
+				// None of this is typed yet
+				const res = await (
+					await fetch(`${import.meta.env.VITE_SERVER_URI}/login`, {
+						credentials: "include",
+						method: "post",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ id_token: response.credential }),
+					})
+				).json();
+				document.cookie = `session_id=${res.session_id}; max-age=${
+					1 * 24 * 60 * 60
+				}`;
+				const user = res.user;
+				userCtx.mutate(user);
 			},
 		});
 		google.accounts.id.renderButton(loginWithGoogleButton, {
@@ -107,11 +117,14 @@ export default function Navbar(props: NavbarProps) {
 						<BsSun size={30} />
 					</Show>
 				</button>
-
-				<div
-					ref={loginWithGoogleButton}
-					class="flex justify-center flex-col h-full w-[40px]"
-				></div>
+				<Suspense>
+					<Show when={!userCtx.user()}>
+						<div
+							ref={loginWithGoogleButton}
+							class="flex justify-center flex-col h-full w-[40px]"
+						></div>
+					</Show>
+				</Suspense>
 				{/* <button
 					class="rounded mr-5 px-5 text-lg border-blue"
 					onclick={() => {

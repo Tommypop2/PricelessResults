@@ -1,28 +1,29 @@
 use actix_web::{
-    cookie::Cookie,
+    cookie::{time::Duration, Cookie, SameSite},
     get,
-    http::StatusCode,
+    http::{header::ContentType, StatusCode},
     post,
     web::{self, Data},
-    App, HttpResponse, HttpServer,
+    App, HttpResponse, HttpServer, Responder,
 };
 mod db;
+mod user;
 use actix_cors::Cors;
 use db::surrealdb_connection::SurrealDBRepo;
 use dotenv::dotenv;
 use google_oauth::AsyncClient;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use surrealdb::sql::Thing;
+use surrealdb::{
+    sql::{self, Object, Thing},
+    Response,
+};
+use user::user::create_routes;
 struct AppState {
     surreal: SurrealDBRepo,
     oauth_clientid: String,
 }
-#[derive(Debug, Serialize)]
-struct EpicThing<'a> {
-    coolBoolean: bool,
-    yes: &'a str,
-}
+
 #[derive(Debug, Deserialize)]
 struct Record {
     #[allow(dead_code)]
@@ -45,49 +46,92 @@ fn generate_random_string(length: i32) -> String {
     result
 }
 #[get("/")]
-async fn index(data: web::Data<AppState>) -> String {
-    println!("About to create");
-    let created: Record = data
-        .surreal
-        .db
-        .create("coolthing")
-        .content(EpicThing {
-            coolBoolean: true,
-            yes: "asd",
-        })
-        .await
-        .unwrap();
-    dbg!(created);
-    // println!("Done");
-    // dbg!(created);
-    // let app_name = &data.surreal.db.query("SELECT * FROM test").await;
-    // dbg!(app_name);
-    format!("Hello There") // <- response with app_name
+async fn index() -> String {
+    format!("This is base route for the Priceless Results API")
 }
 #[derive(Serialize, Deserialize)]
 struct LoginInfo {
     id_token: String,
 }
+#[derive(Serialize, Deserialize, Debug)]
 struct User {
-    id: String,
+    user_id: String,
     username: String,
+    email: Option<String>,
+}
+#[derive(Serialize, Deserialize)]
+struct LoginResult {
+    session_id: Option<String>,
+    error: Option<String>,
+    user: Option<User>,
 }
 #[post("/login")]
-async fn login(shared_data: web::Data<AppState>, json: web::Json<LoginInfo>) -> HttpResponse {
+async fn login(
+    shared_data: web::Data<AppState>,
+    json: web::Json<LoginInfo>,
+) -> actix_web::Result<impl Responder> {
     let client = AsyncClient::new(&shared_data.oauth_clientid);
-    let data = client.validate_id_token(&json.id_token).await;
-    if data.is_err() {
-        return HttpResponse::Ok().body("Invalid Token");
-    }
-    let google_id = data.unwrap().sub;
-    let query = format!("SELECT count(id = {}) AS total FROM user;", google_id);
-    dbg!(&query);
-    let result = shared_data
+    let data_result = client.validate_id_token(&json.id_token).await;
+    let data = match data_result {
+        Ok(res) => res,
+        Err(_) => {
+            return Ok(web::Json(LoginResult {
+                session_id: None,
+                error: Some("yes".into()),
+                user: None,
+            }))
+        }
+    };
+    let google_id: String = data.sub;
+    let username = data.name;
+
+    let email: Option<String> = if data.email_verified {
+        Some(data.email)
+    } else {
+        None
+    };
+    let result: Option<i32> = shared_data
         .surreal
         .db
-        .query(query)
-        .await;
-    dbg!(result.unwrap());
+        .query(format!(
+            "SELECT count(user_id = {}) AS total FROM user;",
+            google_id
+        ))
+        .await
+        .unwrap()
+        .take((0, "total"))
+        .unwrap_or(Some(0));
+    let value = match result {
+        Some(val) => val,
+        None => 0,
+    };
+    let user = if value == 0 {
+        // User doesn't already have account
+        let usr: User = shared_data
+            .surreal
+            .db
+            .create("user")
+            .content(User {
+                user_id: google_id.clone(),
+                username,
+                email,
+            })
+            .await
+            .unwrap();
+        Some(usr)
+    } else {
+        let mut user_response: Response = shared_data
+            .surreal
+            .db
+            .query(format!(
+                "SELECT * FROM user WHERE user_id = \"{}\"",
+                google_id
+            ))
+            .await
+            .unwrap();
+        let usr: Option<User> = user_response.take(0).unwrap();
+        usr
+    };
     let session_id = generate_random_string(64);
     let created: Record = shared_data
         .surreal
@@ -99,10 +143,70 @@ async fn login(shared_data: web::Data<AppState>, json: web::Json<LoginInfo>) -> 
         })
         .await
         .unwrap();
-    HttpResponse::Ok()
-        .cookie(Cookie::new("sessionId", session_id))
-        .body("yes")
-    // return "".into();
+    Ok(web::Json(LoginResult {
+        session_id: Some(session_id),
+        error: None,
+        user: user,
+    }))
+}
+#[derive(Deserialize)]
+struct GetUserParams {
+    session_id: String,
+}
+#[derive(Deserialize, Serialize)]
+struct GetUserResult {
+    success: bool,
+    error: Option<String>,
+    user: Option<User>,
+}
+#[get("/getuser")]
+async fn get_user(
+    shared_data: web::Data<AppState>,
+    query: web::Query<GetUserParams>,
+) -> actix_web::Result<impl Responder> {
+    let session_id = &query.session_id;
+    let user_id_option: Option<String> = shared_data
+        .surreal
+        .db
+        .query(format!(
+            "SELECT user_id FROM session WHERE session_id = \"{}\"",
+            session_id
+        ))
+        .await
+        .unwrap()
+        .take((0, "user_id"))
+        .unwrap();
+    let user_id = match user_id_option {
+        Some(id) => id,
+        None => {
+            return Ok(web::Json(GetUserResult {
+                success: false,
+                error: Some("No session with this id".into()),
+                user: None,
+            }))
+        }
+    };
+    let mut user_response: Response = shared_data
+        .surreal
+        .db
+        .query(format!(
+            "SELECT * FROM user WHERE user_id = \"{}\"",
+            user_id
+        ))
+        .await
+        .unwrap();
+    let user: Option<User> = user_response.take(0).unwrap();
+    Ok(web::Json(GetUserResult {
+        error: None,
+        success: true,
+        user,
+    }))
+}
+#[derive(Serialize)]
+struct TestRouteResult {}
+#[get("/test_route")]
+async fn test_route(shared_data: web::Data<AppState>) -> actix_web::Result<impl Responder> {
+    Ok(web::Json(TestRouteResult {}))
 }
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -129,6 +233,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(surreal_data.clone())
             .service(index)
             .service(login)
+            .service(get_user)
+            .service(test_route).service(web::scope("/epic").configure(create_routes))
     })
     .bind(("127.0.0.1", 8080))?
     .run()

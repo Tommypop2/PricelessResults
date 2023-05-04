@@ -17,6 +17,7 @@ import "./main.css";
 import Navbar from "./components/Navbar";
 import { NavbarProvider } from "./context/NavbarProvider";
 import { ThemeProvider, useThemeContext } from "./context/ThemeProvider";
+import { UserProvider } from "./context/UserProvider";
 export default function Root() {
 	return (
 		<Html lang="en" class="h-full w-full font-[source-sans]">
@@ -41,26 +42,28 @@ export default function Root() {
 						return (
 							<div class={`h-full w-full ${themeCtx.theme()}`}>
 								<div class="h-full w-full dark:bg-dark dark:text-light transition-colors">
-									<NavbarProvider>
-										<div class="h-[50px]">
-											<Navbar
-												options={[
-													{ name: "Home", href: "/" },
-													{ name: "Help", href: "/help" },
-													{ name: "Help more", href: "/ok" },
-												]}
-											/>
-										</div>
-										<div class="h-[calc(100%-50px)]">
-											<Suspense>
-												<ErrorBoundary>
-													<Routes>
-														<FileRoutes />
-													</Routes>
-												</ErrorBoundary>
-											</Suspense>
-										</div>
-									</NavbarProvider>
+									<UserProvider>
+										<NavbarProvider>
+											<div class="h-[50px]">
+												<Navbar
+													options={[
+														{ name: "Home", href: "/" },
+														{ name: "Help", href: "/help" },
+														{ name: "Help more", href: "/ok" },
+													]}
+												/>
+											</div>
+											<div class="h-[calc(100%-50px)]">
+												<Suspense>
+													<ErrorBoundary>
+														<Routes>
+															<FileRoutes />
+														</Routes>
+													</ErrorBoundary>
+												</Suspense>
+											</div>
+										</NavbarProvider>
+									</UserProvider>
 								</div>
 							</div>
 						);
