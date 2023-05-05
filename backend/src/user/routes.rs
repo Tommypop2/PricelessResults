@@ -11,6 +11,7 @@ struct User {
     user_id: String,
     username: String,
     email: Option<String>,
+    picture: String,
 }
 #[derive(Serialize, Deserialize)]
 struct LoginInfo {
@@ -38,7 +39,10 @@ fn generate_random_string(length: i32) -> String {
     }
     result
 }
-
+fn generate_picture_url(username: &str) -> String {
+    let yes = username.replace(" ", "+");
+    format!("https://ui-avatars.com/api/?name={yes}")
+}
 // Routes
 #[post("/login")]
 async fn login(
@@ -59,29 +63,35 @@ async fn login(
     };
     let google_id: String = data.sub;
     let username = data.name;
-
     let email: Option<String> = if data.email_verified {
         Some(data.email)
     } else {
         None
     };
-    let result: Option<i32> = shared_data
-        .surreal
-        .db
-        .query(format!(
-            "SELECT count(user_id = {}) AS total FROM user;",
-            google_id
-        ))
-        .await
-        .unwrap()
-        .take((0, "total"))
-        .unwrap_or(Some(0));
+    // let result: Option<i32> = shared_data
+    //     .surreal
+    //     .db
+    //     .query(format!(
+    //         "SELECT VALUE count(user_id = \"{}\") FROM user;",
+    //         google_id
+    //     ))
+    //     .await
+    //     .unwrap()
+    //     .take(0)
+    //     .unwrap();
+    let result: Option<User> =
+        db_handler::get_user(google_id.clone(), &shared_data.surreal.db).await;
     let value = match result {
-        Some(val) => val,
+        // Kind of an annoying hack
+        Some(_) => 1,
         None => 0,
     };
     let user = if value == 0 {
         // User doesn't already have account
+        let url = match data.picture {
+            Some(url) => url,
+            None => generate_picture_url(&username),
+        };
         let usr: User = shared_data
             .surreal
             .db
@@ -90,6 +100,7 @@ async fn login(
                 user_id: google_id.clone(),
                 username,
                 email,
+                picture: url,
             })
             .await
             .unwrap();

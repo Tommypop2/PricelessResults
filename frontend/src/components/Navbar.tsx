@@ -117,22 +117,18 @@ export default function Navbar(props: NavbarProps) {
 						<BsSun size={30} />
 					</Show>
 				</button>
-				<Suspense>
-					<Show when={!userCtx.user()}>
-						<div
-							ref={loginWithGoogleButton}
-							class="flex justify-center flex-col h-full w-[40px]"
-						></div>
-					</Show>
-				</Suspense>
-				{/* <button
-					class="rounded mr-5 px-5 text-lg border-blue"
-					onclick={() => {
-						console.log("This works");
-					}}
-				>
-					Login
-				</button> */}
+				<div class="flex justify-center flex-col h-full w-[40px] mr-4">
+					<Suspense>
+						<Show
+							when={!userCtx.user()}
+							fallback={
+								<img src={userCtx.user()?.picture} class="rounded-50"></img>
+							}
+						>
+							<div ref={loginWithGoogleButton}></div>
+						</Show>
+					</Suspense>
+				</div>
 			</div>
 		</div>
 	);

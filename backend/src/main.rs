@@ -1,14 +1,14 @@
 use actix_web::{
     get,
     web::{self, Data},
-    App, HttpServer, Responder,
+    App, HttpServer,
 };
 mod db;
 mod user;
 use actix_cors::Cors;
 use db::surrealdb_connection::SurrealDBRepo;
 use dotenv::dotenv;
-use serde::{Deserialize};
+use serde::Deserialize;
 use surrealdb::sql::Thing;
 use user::routes::user_routes;
 struct AppState {

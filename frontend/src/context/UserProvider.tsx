@@ -1,12 +1,9 @@
 import {
-	Accessor,
 	ParentComponent,
 	Resource,
 	Setter,
 	createContext,
-	createMemo,
 	createResource,
-	createSignal,
 	useContext,
 } from "solid-js";
 import { isServer } from "solid-js/web";
@@ -15,6 +12,7 @@ import { useRequest } from "solid-start/server";
 type User = {
 	userName: string;
 	userId: string;
+	picture: string;
 };
 const UserContext = createContext<{
 	user: Resource<User | undefined>;
@@ -37,7 +35,7 @@ export const UserProvider: ParentComponent = (props) => {
 		if (userJson["success"] == false) {
 			return;
 		}
-		return userJson as User;
+		return userJson["user"] as User;
 	});
 	const value = {
 		user,
