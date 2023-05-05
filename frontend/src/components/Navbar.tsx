@@ -50,7 +50,7 @@ export default function Navbar(props: NavbarProps) {
 			callback: async (response: google.accounts.id.CredentialResponse) => {
 				// None of this is typed yet
 				const res = await (
-					await fetch(`${import.meta.env.VITE_SERVER_URI}/login`, {
+					await fetch(`${import.meta.env.VITE_SERVER_URI}/user/login`, {
 						credentials: "include",
 						method: "post",
 						headers: {

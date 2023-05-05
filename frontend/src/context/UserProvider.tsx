@@ -31,7 +31,7 @@ export const UserProvider: ParentComponent = (props) => {
 		)["session_id"];
 		if (!sessionId) return;
 		const res = await fetch(
-			`${import.meta.env.VITE_SERVER_URI}/getuser?session_id=${sessionId}`
+			`${import.meta.env.VITE_SERVER_URI}/user/getuser?session_id=${sessionId}`
 		);
 		const userJson = await res.json();
 		if (userJson["success"] == false) {
