@@ -19,6 +19,7 @@
     "vite": "^4.3.3"
   },
   "dependencies": {
+    "@kobalte/core": "^0.9.5",
     "@solidjs/meta": "^0.28.4",
     "@solidjs/router": "^0.8.2",
     "apexcharts": "^3.40.0",

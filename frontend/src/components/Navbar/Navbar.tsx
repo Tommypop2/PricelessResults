@@ -1,9 +1,18 @@
-import { For, Show, Suspense, onMount } from "solid-js";
+import {
+	For,
+	Show,
+	Suspense,
+	createEffect,
+	createSignal,
+	onMount,
+} from "solid-js";
 import { A } from "solid-start";
 import { useNavbarContext } from "~/context/NavbarProvider";
 import { BsMoon, BsSun } from "solid-icons/bs";
 import { useThemeContext } from "~/context/ThemeProvider";
 import { useUserContext } from "~/context/UserProvider";
+import { DropdownMenu } from "@kobalte/core";
+import styles from "./navbar.module.css";
 interface NavbarProps {
 	options?: NavbarOption[];
 }
@@ -30,7 +39,9 @@ async function waitForGoogleLoad() {
 export default function Navbar(props: NavbarProps) {
 	const navCtx = useNavbarContext();
 	let navbar: HTMLDivElement | undefined;
-	let loginWithGoogleButton: HTMLDivElement | undefined;
+	let [loginWithGoogleButton, setLoginWithGoogleButton] = createSignal<
+		HTMLDivElement | undefined
+	>();
 	if (props.options) navCtx.setOptions(props.options);
 	onMount(() => {
 		if (!navbar) return;
@@ -40,8 +51,8 @@ export default function Navbar(props: NavbarProps) {
 	const isDark = () => themeCtx.theme() === "dark";
 
 	const userCtx = useUserContext();
-	onMount(async () => {
-		if (!loginWithGoogleButton) return;
+	createEffect(async () => {
+		if (!loginWithGoogleButton()) return;
 		await waitForGoogleLoad();
 		google.accounts.id.initialize({
 			client_id:
@@ -66,7 +77,7 @@ export default function Navbar(props: NavbarProps) {
 				userCtx.mutate(user);
 			},
 		});
-		google.accounts.id.renderButton(loginWithGoogleButton, {
+		google.accounts.id.renderButton(loginWithGoogleButton()!, {
 			theme: "outline",
 			size: "large",
 			shape: "square",
@@ -120,12 +131,40 @@ export default function Navbar(props: NavbarProps) {
 				<div class="flex justify-center flex-col h-full w-[40px] mr-4">
 					<Suspense>
 						<Show
-							when={!userCtx.user()}
-							fallback={
-								<img src={userCtx.user()?.picture} class="rounded-50"></img>
-							}
+							when={userCtx.user()}
+							fallback={<div ref={setLoginWithGoogleButton}></div>}
 						>
-							<div ref={loginWithGoogleButton}></div>
+							<DropdownMenu.Root>
+								<DropdownMenu.Trigger class="w-[40px] h-full appearance-none inline-flex justify-center align-middle border-none bg-transparent">
+									<img
+										src={userCtx.user()?.picture}
+										class="rounded-50 h-full"
+									/>
+								</DropdownMenu.Trigger>
+								<DropdownMenu.Portal>
+									<DropdownMenu.Content class={styles.content}>
+										<DropdownMenu.Item class="h-full data-[highlighted]:bg-light-400 flex align-middle justify-center">
+											<A
+												href={"/account"}
+												class="inline-flex items-center m-0 rounded-t-1 no-underline text-inherit"
+											>
+												<span>Account</span>
+											</A>
+										</DropdownMenu.Item>
+										<DropdownMenu.Item
+											class="h-full"
+											onClick={() => {
+												// Remove cookie
+												document.cookie = "session_id=;max-age=0;";
+												// Remove user from context
+												userCtx.mutate();
+											}}
+										>
+											<span class="hover:cursor-pointer">Sign Out</span>
+										</DropdownMenu.Item>
+									</DropdownMenu.Content>
+								</DropdownMenu.Portal>
+							</DropdownMenu.Root>
 						</Show>
 					</Suspense>
 				</div>

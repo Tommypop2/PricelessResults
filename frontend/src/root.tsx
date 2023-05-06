@@ -14,7 +14,7 @@ import {
 } from "solid-start";
 import "virtual:uno.css";
 import "./main.css";
-import Navbar from "./components/Navbar";
+import Navbar from "./components/Navbar/Navbar";
 import { NavbarProvider } from "./context/NavbarProvider";
 import { ThemeProvider, useThemeContext } from "./context/ThemeProvider";
 import { UserProvider } from "./context/UserProvider";

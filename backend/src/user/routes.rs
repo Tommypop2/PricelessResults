@@ -68,17 +68,6 @@ async fn login(
     } else {
         None
     };
-    // let result: Option<i32> = shared_data
-    //     .surreal
-    //     .db
-    //     .query(format!(
-    //         "SELECT VALUE count(user_id = \"{}\") FROM user;",
-    //         google_id
-    //     ))
-    //     .await
-    //     .unwrap()
-    //     .take(0)
-    //     .unwrap();
     let result: Option<User> =
         db_handler::get_user(google_id.clone(), &shared_data.surreal.db).await;
     let value = match result {
@@ -146,8 +135,8 @@ struct GetUserResult {
 struct GetUserParams {
     session_id: String,
 }
-#[get("/getuser")]
-async fn get_user(
+#[get("/user")]
+async fn user_route(
     shared_data: web::Data<AppState>,
     query: web::Query<GetUserParams>,
 ) -> actix_web::Result<impl Responder> {
@@ -171,7 +160,10 @@ async fn get_user(
         user,
     }))
 }
-
+#[get("/user_sessions")]
+async fn user_sessions() -> String {
+    "".into()
+}
 pub fn user_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(login).service(get_user);
+    cfg.service(login).service(user_route);
 }
