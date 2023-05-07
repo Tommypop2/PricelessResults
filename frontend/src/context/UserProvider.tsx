@@ -10,9 +10,11 @@ import { isServer } from "solid-js/web";
 import { parseCookie } from "solid-start";
 import { useRequest } from "solid-start/server";
 type User = {
-	userName: string;
-	userId: string;
+	user_id: string;
+	username: string;
+	email: string;
 	picture: string;
+	session_id: string;
 };
 const UserContext = createContext<{
 	user: Resource<User | undefined>;
@@ -35,7 +37,9 @@ export const UserProvider: ParentComponent = (props) => {
 		if (userJson["success"] == false) {
 			return;
 		}
-		return userJson["user"] as User;
+		let userData = userJson["user"];
+		userData["session_id"] = sessionId;
+		return userData as User;
 	});
 	const value = {
 		user,

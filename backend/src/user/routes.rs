@@ -45,7 +45,7 @@ fn generate_picture_url(username: &str) -> String {
 }
 // Routes
 #[post("/login")]
-async fn login(
+async fn login_route(
     shared_data: web::Data<AppState>,
     json: web::Json<LoginInfo>,
 ) -> actix_web::Result<impl Responder> {
@@ -124,7 +124,31 @@ async fn login(
         user,
     }))
 }
-
+#[derive(Deserialize)]
+struct LogoutParams {
+    session_id: String,
+}
+#[derive(Serialize)]
+struct LogoutResult {
+    error: Option<String>,
+}
+#[get("/logout")]
+async fn logout_route(
+    shared_data: web::Data<AppState>,
+    query: web::Query<LogoutParams>,
+) -> actix_web::Result<impl Responder> {
+    let session_id = &query.session_id;
+    shared_data
+        .surreal
+        .db
+        .query(format!(
+            "DELETE session WHERE session_id = \"{}\"",
+            session_id
+        ))
+        .await
+        .unwrap();
+    Ok(web::Json(LogoutResult { error: None }))
+}
 #[derive(Deserialize, Serialize)]
 struct GetUserResult {
     success: bool,
@@ -140,7 +164,7 @@ async fn user_route(
     shared_data: web::Data<AppState>,
     query: web::Query<GetUserParams>,
 ) -> actix_web::Result<impl Responder> {
-    // Having multiple queries here is not great, but should be solved in the future with graph queries
+    // Having multiple queries here isn't great, but should be solved in the future with graph queries
     let session_id = &query.session_id;
     let session = db_handler::get_session(session_id, &shared_data.surreal.db).await;
     let user_id = match session {
@@ -165,5 +189,7 @@ async fn user_sessions() -> String {
     "".into()
 }
 pub fn user_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(login).service(user_route);
+    cfg.service(login_route)
+        .service(logout_route)
+        .service(user_route);
 }

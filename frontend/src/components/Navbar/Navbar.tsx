@@ -154,9 +154,17 @@ export default function Navbar(props: NavbarProps) {
 										<DropdownMenu.Item
 											class="h-full"
 											onClick={() => {
+												if (!userCtx.user()) return;
 												// Remove cookie
 												document.cookie = "session_id=;max-age=0;";
 												// Remove user from context
+												fetch(
+													`${
+														import.meta.env.VITE_SERVER_URI
+													}/user/logout?session_id=${
+														userCtx.user()?.session_id
+													}`
+												);
 												userCtx.mutate();
 											}}
 										>
