@@ -129,7 +129,7 @@ export default function Navbar(props: NavbarProps) {
 								</DropdownMenu.Trigger>
 								<DropdownMenu.Portal>
 									<DropdownMenu.Content class={styles.content}>
-										<DropdownMenu.Item class="h-full data-[highlighted]:bg-light-400 flex align-middle justify-center">
+										<DropdownMenu.Item class="h-full data-[highlighted]:bg-light-400 flex align-middle justify-center rounded-2">
 											<A
 												href={"/account"}
 												class="inline-flex items-center m-0 rounded-t-1 no-underline text-inherit"
@@ -138,7 +138,7 @@ export default function Navbar(props: NavbarProps) {
 											</A>
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
-											class="h-full"
+											class="h-full data-[highlighted]:bg-light-400 flex align-middle justify-center rounded-2"
 											onClick={() => {
 												userCtx.logout();
 											}}
