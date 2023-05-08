@@ -1082,7 +1082,9 @@ dependencies = [
 
 [[package]]
 name = "google-oauth"
-version = "1.0.5"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e635d56dbf5b5187d964b212f32d3a5820f20c11ec9303e8cc3fdecaa7603f54"
 dependencies = [
  "anyhow",
  "base64 0.21.0",

@@ -62,12 +62,25 @@ async fn login_route(
         }
     };
     let google_id: String = data.sub;
-    let username = data.name;
-    let email: Option<String> = if data.email_verified {
-        Some(data.email)
-    } else {
-        None
+    let username = match data.name {
+        Some(usrname) => usrname,
+        None => "".into(),
     };
+    let email_verified = match data.email_verified {
+        Some(val) => val,
+        None => false,
+    };
+    let email = match data.email {
+        Some(email) => {
+            if email_verified {
+                Some(email)
+            } else {
+                None
+            }
+        }
+        None => None,
+    };
+
     let result: Option<User> =
         db_handler::get_user(google_id.clone(), &shared_data.surreal.db).await;
     let value = match result {
