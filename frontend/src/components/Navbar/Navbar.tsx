@@ -60,21 +60,7 @@ export default function Navbar(props: NavbarProps) {
 			nonce: generateRandomString(64),
 			callback: async (response: google.accounts.id.CredentialResponse) => {
 				// None of this is typed yet
-				const res = await (
-					await fetch(`${import.meta.env.VITE_SERVER_URI}/user/login`, {
-						credentials: "include",
-						method: "post",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({ id_token: response.credential }),
-					})
-				).json();
-				document.cookie = `session_id=${res.session_id}; max-age=${
-					1 * 24 * 60 * 60
-				}`;
-				const user = res.user;
-				userCtx.mutate(user);
+				await userCtx.login(response.credential);
 			},
 		});
 		google.accounts.id.renderButton(loginWithGoogleButton()!, {
@@ -154,18 +140,7 @@ export default function Navbar(props: NavbarProps) {
 										<DropdownMenu.Item
 											class="h-full"
 											onClick={() => {
-												if (!userCtx.user()) return;
-												// Remove cookie
-												document.cookie = "session_id=;max-age=0;";
-												// Remove user from context
-												fetch(
-													`${
-														import.meta.env.VITE_SERVER_URI
-													}/user/logout?session_id=${
-														userCtx.user()?.session_id
-													}`
-												);
-												userCtx.mutate();
+												userCtx.logout();
 											}}
 										>
 											<span class="hover:cursor-pointer">Sign Out</span>

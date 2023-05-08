@@ -1,8 +1,8 @@
 use surrealdb::engine::remote::ws::{Client, Ws};
 use surrealdb::opt::auth::Root;
 use surrealdb::sql::Value;
+use surrealdb::Error;
 use surrealdb::Surreal;
-use surrealdb::{Error};
 
 pub trait Creatable: Into<Value> {}
 pub trait Patchable: Into<Value> {}

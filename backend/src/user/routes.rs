@@ -1,4 +1,4 @@
-use actix_web::{get, post, web, Responder};
+use actix_web::{get, post, web, HttpRequest, Responder};
 use google_oauth::AsyncClient;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,7 @@ struct LoginResult {
 struct Session {
     session_id: String,
     user_id: String,
+    user_agent: Option<String>,
 }
 // Helpers
 const CHARACTERS: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -48,9 +49,19 @@ fn generate_picture_url(username: &str) -> String {
 async fn login_route(
     shared_data: web::Data<AppState>,
     json: web::Json<LoginInfo>,
+    req: HttpRequest,
 ) -> actix_web::Result<impl Responder> {
     let client = AsyncClient::new(&shared_data.oauth_clientid);
     let data_result = client.validate_id_token(&json.id_token).await;
+    let user_agent_opt = req
+        .headers()
+        .get(actix_web::http::header::USER_AGENT)
+        .unwrap();
+    let user_agent = match user_agent_opt.to_str() {
+        Ok(val) => Some(val.to_string()),
+        Err(_) => None,
+    };
+    // let user_agent = user_agent_opt.unwrap().to_str().unwrap();
     let data = match data_result {
         Ok(res) => res,
         Err(_) => {
@@ -128,6 +139,7 @@ async fn login_route(
         .content(Session {
             session_id: session_id.clone(),
             user_id: google_id,
+            user_agent,
         })
         .await
         .unwrap();
@@ -151,6 +163,7 @@ async fn logout_route(
     query: web::Query<LogoutParams>,
 ) -> actix_web::Result<impl Responder> {
     let session_id = &query.session_id;
+    // Don't need to validate, db just won't delete anything if session doesn't exist
     shared_data
         .surreal
         .db
@@ -197,12 +210,38 @@ async fn user_route(
         user,
     }))
 }
-#[get("/user_sessions")]
-async fn user_sessions() -> String {
-    "".into()
+#[derive(Serialize)]
+struct UserSessionResult {
+    sessions: Option<Vec<Session>>,
+}
+#[get("/sessions")]
+async fn user_sessions(
+    shared_data: web::Data<AppState>,
+    query: web::Query<GetUserParams>,
+) -> actix_web::Result<impl Responder> {
+    let session_id = &query.session_id;
+    let session = match db_handler::get_session(session_id, &shared_data.surreal.db).await {
+        Some(val) => val,
+        None => return Ok(web::Json(UserSessionResult { sessions: None })),
+    };
+    let user_id = session.user_id;
+    let sessions: Vec<Session> = shared_data
+        .surreal
+        .db
+        .query(format!(
+            "SELECT * FROM session WHERE user_id = \"{user_id}\"",
+        ))
+        .await
+        .unwrap()
+        .take(0)
+        .unwrap();
+    Ok(web::Json(UserSessionResult {
+        sessions: Some(sessions),
+    }))
 }
 pub fn user_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(login_route)
         .service(logout_route)
-        .service(user_route);
+        .service(user_route)
+        .service(user_sessions);
 }

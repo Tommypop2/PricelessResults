@@ -1,13 +1,24 @@
 import { Show, Suspense } from "solid-js";
 import { useUserContext } from "~/context/UserProvider";
-function Yes(props: { user: any }) {
-	return <div>{props.user.userName}</div>;
-}
+import SessionsView from "./SessionsView";
 export default function Account() {
 	const userCtx = useUserContext();
 	return (
-		<Suspense>
-			<div>{userCtx.user()?.username}</div>
-		</Suspense>
+		<>
+			<Suspense>
+				<div>{userCtx.user()?.username}</div>
+				<Show when={userCtx.user()?.session_id}>
+					<h1>Sessions</h1>
+					<div class="grid grid-flow-col grid-cols-3">
+						<SessionsView
+							session_id={userCtx.user()?.session_id}
+							deleteSession={(session_id: string) =>
+								userCtx.invalidateSession(session_id)
+							}
+						/>
+					</div>
+				</Show>
+			</Suspense>
+		</>
 	);
 }
