@@ -1,5 +1,7 @@
 # Priceless Results
 
+[![Server Build](https://github.com/Tommypop2/PricelessResults/actions/workflows/rust.yml/badge.svg)](https://github.com/Tommypop2/PricelessResults/actions/workflows/rust.yml)
+
 ## About
 
 This is the monorepo for Priceless Results. It contains both the frontend and backend.
