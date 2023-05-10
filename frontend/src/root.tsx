@@ -50,6 +50,7 @@ export default function Root() {
 														{ name: "Home", href: "/" },
 														{ name: "Help", href: "/help" },
 														{ name: "Help more", href: "/ok" },
+														{ name: "About", href: "/about" },
 													]}
 												/>
 											</div>
