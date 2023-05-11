@@ -256,7 +256,7 @@ mod tests {
         let expected = "https://ui-avatars.com/api/?name=Thomas+Beer";
         assert_eq!(generated, expected)
     }
-    
+
     #[test]
     fn generate_random_string_test() {
         assert_eq!(generate_random_string(64).len(), 64)
