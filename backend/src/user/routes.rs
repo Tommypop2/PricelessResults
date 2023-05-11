@@ -253,8 +253,8 @@ mod tests {
 
     #[test]
     fn generate_pic_url_test() {
-        let generated = generate_picture_url("Thomas Beer");
-        let expected = "https://ui-avatars.com/api/?name=Thomas+Beer";
+        let generated = generate_picture_url("Test User");
+        let expected = "https://ui-avatars.com/api/?name=Test+User";
         assert_eq!(generated, expected)
     }
 
