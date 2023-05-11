@@ -3,7 +3,7 @@ name: Server Build
 on:
   push:
     paths:
-      - "backend"
+      - "./backend"
   pull_request:
     branches: [ "main" ]
 
