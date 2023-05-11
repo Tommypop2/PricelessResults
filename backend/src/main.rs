@@ -1,5 +1,4 @@
 use actix_web::{
-    get,
     web::{self, Data},
     App, HttpServer,
 };
@@ -22,7 +21,6 @@ struct Record {
     id: Thing,
 }
 
-#[get("/")]
 async fn index() -> String {
     format!("This is base route for the Priceless Results API")
 }
@@ -50,10 +48,21 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .app_data(surreal_data.clone())
-            .service(index)
+            .route("/", web::get().to(index))
             .service(web::scope("/user").configure(user_routes))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
     .await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[actix_web::test]
+    async fn test_index_ok() {
+        let res = index().await;
+        assert_eq!(res, "This is base route for the Priceless Results API")
+    }
 }

@@ -245,3 +245,20 @@ pub fn user_routes(cfg: &mut web::ServiceConfig) {
         .service(user_route)
         .service(user_sessions);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generate_pic_url_test() {
+        let generated = generate_picture_url("Thomas Beer");
+        let expected = "https://ui-avatars.com/api/?name=Thomas+Beer";
+        assert_eq!(generated, expected)
+    }
+    
+    #[test]
+    fn generate_random_string_test() {
+        assert_eq!(generate_random_string(64).len(), 64)
+    }
+}
