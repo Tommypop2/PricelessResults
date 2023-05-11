@@ -239,6 +239,7 @@ async fn user_sessions(
         sessions: Some(sessions),
     }))
 }
+
 pub fn user_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(login_route)
         .service(logout_route)

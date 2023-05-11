@@ -10,6 +10,7 @@ use dotenv::dotenv;
 use serde::Deserialize;
 use surrealdb::sql::Thing;
 use user::routes::user_routes;
+
 struct AppState {
     surreal: SurrealDBRepo,
     oauth_clientid: String,
