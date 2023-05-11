@@ -10,7 +10,7 @@ edition = "2021"
 actix-web = "4"
 serde = { version = "1.0.159", features = ["derive"] }
 futures = "0.3"
-surrealdb = "1.0.0-beta.9"
+surrealdb = "1.0.0-beta.9+20230402"
 env_logger = "0.10.0"
 dotenv = "0.15.0"
 google-oauth = "1.1.0"
