@@ -138,7 +138,7 @@ async fn login_route(
         .create("session")
         .content(Session {
             session_id: session_id.clone(),
-            user_id: google_id,
+            user_id: google_id, //Set user here instead to something like user:abc123 as a string so it remains in the struct
             user_agent,
         })
         .await

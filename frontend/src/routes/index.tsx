@@ -38,7 +38,7 @@ export default function Home() {
 					}}
 				/>
 				<img
-					src="512x512.webp"
+					src="/512x512.webp"
 					class="relative hover:animate-pulse w-[400px] h-[400px] <sm:w-[100%] <sm:h-[auto] object-cover z-[1]"
 					draggable={false}
 					alt="Logo"

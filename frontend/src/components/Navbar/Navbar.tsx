@@ -3,6 +3,7 @@ import {
 	Show,
 	Suspense,
 	createEffect,
+	createMemo,
 	createSignal,
 	onMount,
 } from "solid-js";
@@ -15,6 +16,7 @@ import { DropdownMenu } from "@kobalte/core";
 import styles from "./navbar.module.css";
 interface NavbarProps {
 	options?: NavbarOption[];
+	loggedInOptions?: NavbarOption[];
 }
 const characters =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -71,12 +73,17 @@ export default function Navbar(props: NavbarProps) {
 		});
 		google.accounts.id.prompt();
 	});
+	// This is kinda slow because of all of the copy operations, but it should be ok as it's memoized
+	const options = createMemo(() => [
+		...(navCtx.options() ?? []),
+		...(props.loggedInOptions ?? []),
+	]);
 	return (
 		<div
 			class={`flex flex-row w-full h-full gap-1 m-0 p-0 bg-gradient animate-gradient`}
 			ref={navbar}
 		>
-			<For each={navCtx.options()}>
+			<For each={options()}>
 				{(item) => {
 					return (
 						<div class="h-full flex">
@@ -121,17 +128,22 @@ export default function Navbar(props: NavbarProps) {
 							fallback={<div ref={setLoginWithGoogleButton}></div>}
 						>
 							<DropdownMenu.Root>
-								<DropdownMenu.Trigger class="w-[40px] h-full appearance-none inline-flex justify-center align-middle border-none bg-transparent">
+								<DropdownMenu.Trigger
+									class="w-[40px] h-full appearance-none inline-flex justify-center align-middle border-none bg-transparent"
+									name="User Options"
+									aria-label="User Options"
+								>
 									<img
 										src={userCtx.user()?.picture}
 										class="rounded-50 h-full"
+										alt="Profile Picture"
 									/>
 								</DropdownMenu.Trigger>
 								<DropdownMenu.Portal>
 									<DropdownMenu.Content class={styles.content}>
 										<DropdownMenu.Item class="h-full data-[highlighted]:bg-light-400 flex align-middle justify-center rounded-2">
 											<A
-												href={"/account"}
+												href={"/user/account"}
 												class="inline-flex items-center m-0 rounded-t-1 no-underline text-inherit"
 											>
 												<span>Account</span>

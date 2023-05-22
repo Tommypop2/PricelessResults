@@ -32,8 +32,6 @@ export default function Root() {
 					defer
 					id="googleScript"
 				></script>
-
-				{/* <Link rel="preload" as="font" href="/SourceSansPro-Regular.ttf" crossOrigin="anonymous" /> */}
 			</Head>
 			<Body class="h-full w-full m-0 p-0 overflow-hidden">
 				<ThemeProvider>
@@ -49,8 +47,10 @@ export default function Root() {
 													options={[
 														{ name: "Home", href: "/" },
 														{ name: "Help", href: "/help" },
-														{ name: "Help more", href: "/ok" },
 														{ name: "About", href: "/about" },
+													]}
+													loggedInOptions={[
+														{ name: "Dashboard", href: "/user/dashboard" },
 													]}
 												/>
 											</div>

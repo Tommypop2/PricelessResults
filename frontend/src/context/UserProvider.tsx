@@ -64,7 +64,7 @@ export const UserProvider: ParentComponent = (props) => {
 			).json();
 			document.cookie = `session_id=${res.session_id}; max-age=${
 				1 * 24 * 60 * 60
-			}`;
+			}; SameSite=Secure`;
 			let newUser = res.user;
 			newUser["session_id"] = res.session_id;
 			mutate(newUser);
