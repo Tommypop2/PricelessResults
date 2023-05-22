@@ -12,8 +12,8 @@ type SessionsViewProps = {
 };
 type Session = { session_id: string; user_id: string; user_agent: string };
 export default function SessionsView(props: SessionsViewProps) {
-	const [user_sessions, { mutate, refetch }] = createResource(async () => {
-		// if (!props.session_id) return;
+	const [user_sessions, { mutate }] = createResource(async () => {
+		if (!props.session_id) return;
 		const res = await fetch(
 			`${import.meta.env.VITE_SERVER_URI}/user/sessions?session_id=${
 				props.session_id
@@ -26,7 +26,7 @@ export default function SessionsView(props: SessionsViewProps) {
 	return (
 		<Suspense>
 			<For each={user_sessions()}>
-				{(item, i) => {
+				{(item) => {
 					return (
 						<div class="flex flex-col">
 							<Show when={item.session_id === props.session_id}>

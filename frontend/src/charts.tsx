@@ -19,7 +19,6 @@ export default function Charts() {
 		],
 	});
 
-	// options and series can be a store or signal
 	return (
 		<>
 			Cool Dashboard Page

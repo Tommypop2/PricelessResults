@@ -61,7 +61,6 @@ export default function Navbar(props: NavbarProps) {
 				"840942651861-i3g0m9jvt8j0js61ik1i54at9p8m7v9s.apps.googleusercontent.com",
 			nonce: generateRandomString(64),
 			callback: async (response: google.accounts.id.CredentialResponse) => {
-				// None of this is typed yet
 				await userCtx.login(response.credential);
 			},
 		});

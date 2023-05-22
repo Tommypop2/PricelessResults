@@ -27,6 +27,7 @@ const UserContext = createContext<{
 	) => User | Promise<User | undefined> | null | undefined;
 }>();
 export const UserProvider: ParentComponent = (props) => {
+	// Retrieves user from the backend
 	const [user, { mutate, refetch }] = createResource(async () => {
 		const event = useRequest();
 		const sessionId = parseCookie(
@@ -52,6 +53,7 @@ export const UserProvider: ParentComponent = (props) => {
 	const value = {
 		user,
 		login: async (id_token: string) => {
+			// This should be strongly typed in the future
 			const res = await (
 				await fetch(`${import.meta.env.VITE_SERVER_URI}/user/login`, {
 					credentials: "include",

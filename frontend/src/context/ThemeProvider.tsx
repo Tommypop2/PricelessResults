@@ -18,6 +18,7 @@ const ThemeContext = createContext<{
 }>();
 
 export const ThemeProvider: ParentComponent = (props) => {
+	// Gets the user's theme isomorphically (either from document.cookie on the client, or request.headers.get("cookie") on the server)
 	const event = useRequest();
 	const userTheme = parseCookie(
 		isServer ? event.request.headers.get("cookie") ?? "" : document.cookie

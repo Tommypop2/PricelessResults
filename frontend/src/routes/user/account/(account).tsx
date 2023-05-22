@@ -1,4 +1,4 @@
-import { Show, Suspense } from "solid-js";
+import { Show } from "solid-js";
 import { useUserContext } from "~/context/UserProvider";
 import SessionsView from "./SessionsView";
 export default function Account() {
@@ -12,6 +12,7 @@ export default function Account() {
 					<SessionsView
 						session_id={userCtx.user()?.session_id}
 						deleteSession={(session_id: string) => {
+							// Also logs out user if they delete their current session
 							if (userCtx.user()?.session_id === session_id) {
 								userCtx.logout();
 								return;
