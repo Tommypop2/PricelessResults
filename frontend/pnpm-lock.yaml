@@ -10,6 +10,12 @@ dependencies:
   '@solidjs/router':
     specifier: ^0.8.2
     version: 0.8.2(solid-js@1.7.3)
+  chart.js:
+    specifier: ^4.3.0
+    version: 4.3.0
+  solid-chartjs:
+    specifier: ^1.3.8
+    version: 1.3.8(@solid-primitives/refs@1.0.4)(chart.js@4.3.0)(solid-js@1.7.3)
   solid-icons:
     specifier: ^1.0.4
     version: 1.0.4(solid-js@1.7.3)
@@ -1513,6 +1519,10 @@ packages:
       solid-js: 1.7.3
     dev: false
 
+  /@kurkle/color@0.3.2:
+    resolution: {integrity: sha512-fuscdXJ9G1qb7W8VdHi+IwRqij3lBkosAm4ydQtEmbY58OzHXqQhvlxqEkoz0yssNVn38bcpRWgA9PP+OGoisw==}
+    dev: false
+
   /@mapbox/node-pre-gyp@1.0.10:
     resolution: {integrity: sha512-4ySo4CjzStuprMwk35H5pPbkymjv1SF3jGLj6rAHp/xT/RF7TL7bd9CTm1xDY49K2qF7jmR/g7k+SkLETP6opA==}
     hasBin: true
@@ -1676,6 +1686,15 @@ packages:
       solid-js: 1.7.3
     dev: false
 
+  /@solid-primitives/refs@1.0.4(solid-js@1.7.3):
+    resolution: {integrity: sha512-BxZKkct0OIyADWIoA9UITm+3G5Xb3IkOa0nZd40SgOK5DtMqpXFIEPUkJ/woPB90WqlM9UvvuiJHUyAjMeAmCw==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/utils': 6.2.0(solid-js@1.7.3)
+      solid-js: 1.7.3
+    dev: false
+
   /@solid-primitives/rootless@1.3.2(solid-js@1.7.3):
     resolution: {integrity: sha512-R1rncXOUcB/i3PyvKhSWcsocPRe1n3HsMIO717RpWFd2knUF8+b0cGgRDEoneGaV/a5kq4cqH3csa66klxuM3A==}
     peerDependencies:
@@ -1696,6 +1715,14 @@ packages:
 
   /@solid-primitives/utils@6.1.0(solid-js@1.7.3):
     resolution: {integrity: sha512-uTikKFrq33UO+MnKt2WzZr9WYbQe5YX58ytGkL+29DL6o0pZs1wrICbd4ymzSm8azqzMcQqEQOL3HLWjuv9tLw==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      solid-js: 1.7.3
+    dev: false
+
+  /@solid-primitives/utils@6.2.0(solid-js@1.7.3):
+    resolution: {integrity: sha512-T62WlLwKkbmicsw/xpwMQyv9MmZRSaVyutXfS5icc9v0cb8qGMUxRxr5LVvZHYQCZ9DEFboZB0r711xsbVBbeA==}
     peerDependencies:
       solid-js: ^1.6.12
     dependencies:
@@ -1762,6 +1789,10 @@ packages:
 
   /@types/resolve@1.20.2:
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
+
+  /@types/uuid@8.3.4:
+    resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
+    dev: false
 
   /@unocss/astro@0.51.8(rollup@3.21.2)(vite@4.3.3):
     resolution: {integrity: sha512-1cY22psmzeW6f29Os7nXhrIgbjR2QI2qPU+PDEMprWiaVHlIc86WUKNzPIcuKskAQMMhWVCIN/XlCNzxZzXJqw==}
@@ -2162,6 +2193,13 @@ packages:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
+
+  /chart.js@4.3.0:
+    resolution: {integrity: sha512-ynG0E79xGfMaV2xAHdbhwiPLczxnNNnasrmPEXriXsPJGjmhOBYzFVEsB65w2qMDz+CaBJJuJD0inE/ab/h36g==}
+    engines: {pnpm: '>=7'}
+    dependencies:
+      '@kurkle/color': 0.3.2
+    dev: false
 
   /chokidar@3.5.3:
     resolution: {integrity: sha512-Dr3sfKRP6oTcjf2JmUmFJfeVMvXBdegxB0iVQ5eb2V10uFJUCAS8OByZdVAyVb8xXNz3GjjTgj9kLWsZTqE6kw==}
@@ -3046,6 +3084,14 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
+  /minifaker@1.34.1:
+    resolution: {integrity: sha512-O9+c6GaUETgtKe65bJkpDTJxGcAALiUPqJtDv97dT3o0uP2HmyUVEguEGm6PLKuoSzZUmHqSTZ4cS7m8xKFEAg==}
+    dependencies:
+      '@types/uuid': 8.3.4
+      nanoid: 3.3.6
+      uuid: 8.3.2
+    dev: false
+
   /minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
     dependencies:
@@ -3446,6 +3492,19 @@ packages:
       mrmime: 1.0.1
       totalist: 3.0.1
 
+  /solid-chartjs@1.3.8(@solid-primitives/refs@1.0.4)(chart.js@4.3.0)(solid-js@1.7.3):
+    resolution: {integrity: sha512-cq85ZOTBAyXTbo1IQzViPzDM0go7Da/6SP6PEFno29Pdg8ubFQB5ctYbByZFLNfITlQO1TcP23Z40myKZehI6g==}
+    peerDependencies:
+      '@solid-primitives/refs': ^1.0.3
+      chart.js: ^4.3.0
+      solid-js: ^1.7.5
+    dependencies:
+      '@solid-primitives/refs': 1.0.4(solid-js@1.7.3)
+      chart.js: 4.3.0
+      minifaker: 1.34.1
+      solid-js: 1.7.3
+    dev: false
+
   /solid-icons@1.0.4(solid-js@1.7.3):
     resolution: {integrity: sha512-gJTp4in3+OYCs9WvDkSLt4Los2unR3Uoder8wjh15GsfP20xiNOLfPTJllXmn+fI8+k3x7bRYtLGIgWd9fUQug==}
     engines: {node: '>= 16'}
@@ -3796,6 +3855,11 @@ packages:
   /utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+
+  /uuid@8.3.2:
+    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
+    dev: false
 
   /validate-html-nesting@1.2.2:
     resolution: {integrity: sha512-hGdgQozCsQJMyfK5urgFcWEqsSSrK63Awe0t/IMR0bZ0QMtnuaiHzThW81guu3qx9abLi99NEuiaN6P9gVYsNg==}
