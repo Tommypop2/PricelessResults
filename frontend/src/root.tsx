@@ -26,6 +26,8 @@ export default function Root() {
 				<Meta charset="utf-8" />
 				<Meta name="viewport" content="width=device-width, initial-scale=1" />
 				<Meta name="description" content="The world's coolest results system" />
+				<Meta property="og:image" content="/512x512.webp" />
+				<Meta property="og:title" content="The coolest results system" />
 				{/* Add google gsi globally. This is not ideal, but they don't distribute it via npm yet */}
 				<script
 					src="https://accounts.google.com/gsi/client"
