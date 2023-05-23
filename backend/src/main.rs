@@ -4,13 +4,14 @@ use actix_web::{
 };
 mod db;
 mod user;
+mod user_tests;
 use actix_cors::Cors;
 use db::surrealdb_connection::SurrealDBRepo;
 use dotenv::dotenv;
 use serde::Deserialize;
 use surrealdb::sql::Thing;
 use user::routes::user_routes;
-
+use user_tests::routes::test_routes;
 struct AppState {
     surreal: SurrealDBRepo,
     oauth_clientid: String,
@@ -51,6 +52,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(surreal_data.clone())
             .route("/", web::get().to(index))
             .service(web::scope("/user").configure(user_routes))
+            .service(web::scope("/tests").configure(test_routes))
     })
     .bind(("127.0.0.1", 8080))?
     .run()

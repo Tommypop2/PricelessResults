@@ -1,28 +1,51 @@
 import { onMount } from "solid-js";
-import { Chart, Title, Tooltip, Legend, Colors } from "chart.js";
+import {
+	Chart,
+	Title,
+	Tooltip,
+	Legend,
+	Colors,
+	ChartData,
+	ChartOptions,
+} from "chart.js";
 import { Line } from "solid-chartjs";
 export default function Dashboard() {
 	onMount(() => {
 		Chart.register(Title, Tooltip, Legend, Colors);
 	});
 
-	const chartData = {
-		labels: ["January", "February", "March", "April", "May"],
+	const chartData: ChartData = {
+		labels: ["Test1", "Test2", "Test3", "Test4", "Test5"],
 		datasets: [
 			{
-				label: "Sales",
-				data: [50, 60, 70, 80, 90],
+				label: "Test Scores",
+				data: [80, 75, 90, 50, 72],
+				pointBackgroundColor: "yellow",
+				borderColor: "red",
+				tension: 0.2,
 			},
 		],
 	};
-	const chartOptions = {
+	const chartOptions: ChartOptions = {
+		scales: {
+			y: {
+				display: true,
+				title: {
+					display: true,
+					text: "Score (%)",
+				},
+				max: 100,
+				min: 0,
+			},
+			x: {},
+		},
 		responsive: true,
 		maintainAspectRatio: false,
 	};
 
 	return (
-		<div>
-			<Line data={chartData} options={chartOptions} width={500} height={500} />
+		<div class="w-80 h-80 hover:scale-105 transition-all ease-in-out">
+			<Line data={chartData} options={chartOptions} />
 		</div>
 	);
 }

@@ -4,15 +4,11 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use surrealdb::Response;
 // This is terrible structure: will be fixed in the future hopefully
-use crate::{user::db_handler, AppState, Record};
-// Structures
-#[derive(Serialize, Deserialize, Debug)]
-struct User {
-    user_id: String,
-    username: String,
-    email: Option<String>,
-    picture: String,
-}
+use crate::{
+    user::db_handler::{self, Session, User},
+    AppState,
+};
+// Stuctures
 #[derive(Serialize, Deserialize)]
 struct LoginInfo {
     id_token: String,
@@ -23,23 +19,7 @@ struct LoginResult {
     error: Option<String>,
     user: Option<User>,
 }
-#[derive(Serialize, Deserialize)]
-struct Session {
-    session_id: String,
-    user_id: String,
-    user_agent: Option<String>,
-}
 // Helpers
-const CHARACTERS: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-fn generate_random_string(length: i32) -> String {
-    let mut rng = rand::thread_rng();
-    let mut result: String = "".into();
-    let chars_len = CHARACTERS.len();
-    for _ in 0..length {
-        result.push(CHARACTERS.chars().nth(rng.gen_range(0..chars_len)).unwrap());
-    }
-    result
-}
 fn generate_picture_url(username: &str) -> String {
     let yes = username.replace(" ", "+");
     format!("https://ui-avatars.com/api/?name={yes}")
@@ -114,6 +94,7 @@ async fn login_route(
                 username,
                 email,
                 picture: url,
+                admin: false,
             })
             .await
             .unwrap();
@@ -131,20 +112,20 @@ async fn login_route(
         let usr: Option<User> = user_response.take(0).unwrap();
         usr
     };
-    let session_id = generate_random_string(64);
-    let _created: Record = shared_data
-        .surreal
-        .db
-        .create("session")
-        .content(Session {
-            session_id: session_id.clone(),
-            user_id: google_id, //Set user here instead to something like user:abc123 as a string so it remains in the struct
-            user_agent,
-        })
-        .await
-        .unwrap();
+    let session_result =
+        db_handler::create_session(&shared_data.surreal.db, &google_id, user_agent).await;
+    let session = match session_result {
+        Ok(session) => session,
+        Err(err) => {
+            return Ok(web::Json(LoginResult {
+                session_id: None,
+                error: Some(err.to_string()),
+                user: None,
+            }));
+        }
+    };
     Ok(web::Json(LoginResult {
-        session_id: Some(session_id),
+        session_id: Some(session.session_id),
         error: None,
         user,
     }))
@@ -164,15 +145,7 @@ async fn logout_route(
 ) -> actix_web::Result<impl Responder> {
     let session_id = &query.session_id;
     // Don't need to validate, db just won't delete anything if session doesn't exist
-    shared_data
-        .surreal
-        .db
-        .query(format!(
-            "DELETE session WHERE session_id = \"{}\"",
-            session_id
-        ))
-        .await
-        .unwrap();
+    db_handler::delete_session(session_id, &shared_data.surreal.db).await;
     Ok(web::Json(LogoutResult { error: None }))
 }
 #[derive(Deserialize, Serialize)]
@@ -203,11 +176,21 @@ async fn user_route(
             }))
         }
     };
-    let user: Option<User> = db_handler::get_user(user_id, &shared_data.surreal.db).await;
+    let user_option: Option<User> = db_handler::get_user(user_id, &shared_data.surreal.db).await;
+    let user = match user_option {
+        Some(user) => user,
+        None => {
+            return Ok(web::Json(GetUserResult {
+                success: false,
+                error: Some("No user with this session".into()),
+                user: None,
+            }))
+        }
+    };
     Ok(web::Json(GetUserResult {
         error: None,
         success: true,
-        user,
+        user: Some(user),
     }))
 }
 #[derive(Serialize)]
@@ -256,10 +239,5 @@ mod tests {
         let generated = generate_picture_url("Test User");
         let expected = "https://ui-avatars.com/api/?name=Test+User";
         assert_eq!(generated, expected)
-    }
-
-    #[test]
-    fn generate_random_string_test() {
-        assert_eq!(generate_random_string(64).len(), 64)
     }
 }
