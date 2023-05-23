@@ -1,6 +1,5 @@
 use actix_web::{get, post, web, HttpRequest, Responder};
 use google_oauth::AsyncClient;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use surrealdb::Response;
 // This is terrible structure: will be fixed in the future hopefully
