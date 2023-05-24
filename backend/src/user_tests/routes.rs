@@ -9,23 +9,24 @@ use serde::{Deserialize, Serialize};
 async fn index() -> actix_web::Result<impl actix_web::Responder> {
     Ok(format!("Hello"))
 }
-#[derive(Deserialize)]
-struct CreateTestData {
-    test: Test,
-    session_id: String,
-}
 #[derive(Serialize)]
 struct CreateTestResult {
     success: bool,
     test: Option<Test>,
     error: Option<String>,
 }
+#[derive(Deserialize)]
+struct CreateTestParams {
+    test: Test,
+    session_id: String,
+}
 #[post("/create")]
 async fn create_test(
     state: web::Data<AppState>,
-    json: web::Json<CreateTestData>,
+    json: web::Json<CreateTestParams>,
 ) -> actix_web::Result<impl actix_web::Responder> {
-    let session = user_db_handler::get_session(&json.session_id, &state.surreal.db).await;
+    let session_id = &json.session_id;
+    let session = user_db_handler::get_session(session_id, &state.surreal.db).await;
     let _ = match session {
         Some(session) => session,
         None => {
@@ -54,5 +55,5 @@ async fn create_test(
     }))
 }
 pub fn test_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(index);
+    cfg.service(index).service(create_test);
 }

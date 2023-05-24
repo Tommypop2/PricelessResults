@@ -20,8 +20,8 @@ struct LoginResult {
 }
 // Helpers
 fn generate_picture_url(username: &str) -> String {
-    let yes = username.replace(" ", "+");
-    format!("https://ui-avatars.com/api/?name={yes}")
+    let usr_str = username.replace(" ", "+");
+    format!("https://ui-avatars.com/api/?name={usr_str}")
 }
 // Routes
 #[post("/login")]

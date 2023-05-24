@@ -15,6 +15,7 @@ type User = {
 	email: string;
 	picture: string;
 	session_id: string;
+	admin: boolean;
 };
 const UserContext = createContext<{
 	user: Resource<User | undefined>;
@@ -66,7 +67,7 @@ export const UserProvider: ParentComponent = (props) => {
 			).json();
 			document.cookie = `session_id=${res.session_id}; max-age=${
 				1 * 24 * 60 * 60
-			}; SameSite=Secure`;
+			}; SameSite=Strict; Secure; path=/`;
 			let newUser = res.user;
 			newUser["session_id"] = res.session_id;
 			mutate(newUser);
@@ -74,7 +75,8 @@ export const UserProvider: ParentComponent = (props) => {
 		logout: async (session_id = user()?.session_id) => {
 			if (!session_id) return;
 			// Remove cookie
-			document.cookie = "session_id=;max-age=0;";
+			document.cookie =
+				"session_id=;max-age=0; SameSite=Strict; Secure; path=/";
 			// Remove user from context
 			await invalidateSession(session_id);
 			mutate();
