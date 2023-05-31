@@ -70,9 +70,8 @@ async fn login_route(
         }
         None => None,
     };
-
     let result: Option<User> =
-    user_handler::get_user(google_id.clone(), &shared_data.surreal.db).await;
+        user_handler::get_user(google_id.clone(), &shared_data.surreal.db).await;
     let value = match result {
         // Kind of an annoying hack
         Some(_) => 1,
