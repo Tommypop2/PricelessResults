@@ -80,6 +80,16 @@ async fn login_route(
     };
     let user = if value == 0 {
         // User doesn't already have account
+        let email_string = match email {
+            Some(value) => value,
+            None => {
+                return Ok(web::Json(LoginResult {
+                    session_id: None,
+                    error: Some("This account has no email".to_string()),
+                    user: None,
+                }));
+            }
+        };
         let url = match data.picture {
             Some(url) => url,
             None => generate_picture_url(&username),
@@ -91,7 +101,7 @@ async fn login_route(
             .content(User {
                 user_id: google_id.clone(),
                 username,
-                email,
+                email: email_string,
                 picture: url,
                 admin: false,
             })

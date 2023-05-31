@@ -18,7 +18,7 @@ fn generate_random_string(length: i32) -> String {
 pub struct User {
     pub user_id: String,
     pub username: String,
-    pub email: Option<String>,
+    pub email: String,
     pub picture: String,
     pub admin: bool,
 }

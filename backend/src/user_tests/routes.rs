@@ -5,7 +5,7 @@ use crate::{
 };
 use actix_web::{get, post, web};
 use serde::{Deserialize, Serialize};
-#[get("/")]
+#[get("")]
 async fn index() -> actix_web::Result<impl actix_web::Responder> {
     Ok(format!("Hello"))
 }

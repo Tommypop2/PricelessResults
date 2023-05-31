@@ -1,7 +1,9 @@
 use actix_web::{
+    middleware,
     web::{self, Data},
     App, HttpServer,
 };
+mod classes;
 mod db;
 mod user;
 mod user_tests;
@@ -12,6 +14,8 @@ use serde::Deserialize;
 use surrealdb::sql::Thing;
 use user::routes::user_routes;
 use user_tests::routes::test_routes;
+
+use crate::classes::routes::class_routes;
 struct AppState {
     surreal: SurrealDBRepo,
     oauth_clientid: String,
@@ -49,10 +53,15 @@ async fn main() -> std::io::Result<()> {
         let cors = Cors::permissive();
         App::new()
             .wrap(cors)
+            // This normalises the path for requests. However, if POST requests are normalised, they are transformed into get requests
+            .wrap(middleware::NormalizePath::new(
+                middleware::TrailingSlash::Trim,
+            ))
             .app_data(surreal_data.clone())
             .route("/", web::get().to(index))
             .service(web::scope("/user").configure(user_routes))
             .service(web::scope("/tests").configure(test_routes))
+            .service(web::scope("/class").configure(class_routes))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
