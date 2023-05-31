@@ -54,6 +54,7 @@ async fn create_test(
         error: None,
     }))
 }
+
 pub fn test_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(index).service(create_test);
 }
