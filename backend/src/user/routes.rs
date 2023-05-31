@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use surrealdb::Response;
 // This is terrible structure: will be fixed in the future hopefully
 use crate::{
-    database::handlers::user_handler::{self, Session, User},
+    db::handlers::user_handler::{self, Session, User},
     AppState,
 };
 // Stuctures

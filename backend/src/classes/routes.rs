@@ -1,5 +1,5 @@
 use crate::{
-    database::handlers::{
+    db::handlers::{
         class_handler::{self, Class, ClassRecord},
         user_handler,
     },

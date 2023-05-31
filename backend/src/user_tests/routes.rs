@@ -1,6 +1,6 @@
 use crate::{
-    database::handlers::test_handler::{self, Test},
-    database::handlers::user_handler,
+    db::handlers::test_handler::{self, Test},
+    db::handlers::user_handler,
     AppState,
 };
 use actix_web::{get, post, web};
