@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use surrealdb::Response;
 // This is terrible structure: will be fixed in the future hopefully
 use crate::{
-    user::db_handler::{self, Session, User},
+    database::handlers::user_handler::{self, Session, User},
     AppState,
 };
 // Stuctures
@@ -72,7 +72,7 @@ async fn login_route(
     };
 
     let result: Option<User> =
-        db_handler::get_user(google_id.clone(), &shared_data.surreal.db).await;
+    user_handler::get_user(google_id.clone(), &shared_data.surreal.db).await;
     let value = match result {
         // Kind of an annoying hack
         Some(_) => 1,
@@ -122,7 +122,7 @@ async fn login_route(
         usr
     };
     let session_result =
-        db_handler::create_session(&shared_data.surreal.db, &google_id, user_agent).await;
+        user_handler::create_session(&shared_data.surreal.db, &google_id, user_agent).await;
     let session = match session_result {
         Ok(session) => session,
         Err(err) => {
@@ -154,7 +154,7 @@ async fn logout_route(
 ) -> actix_web::Result<impl Responder> {
     let session_id = &query.session_id;
     // Don't need to validate, db just won't delete anything if session doesn't exist
-    db_handler::delete_session(session_id, &shared_data.surreal.db).await;
+    user_handler::delete_session(session_id, &shared_data.surreal.db).await;
     Ok(web::Json(LogoutResult { error: None }))
 }
 #[derive(Deserialize, Serialize)]
@@ -174,7 +174,7 @@ async fn user_route(
 ) -> actix_web::Result<impl Responder> {
     // Having multiple queries here isn't great, but should be solved in the future with graph queries
     let session_id = &query.session_id;
-    let session = db_handler::get_session(session_id, &shared_data.surreal.db).await;
+    let session = user_handler::get_session(session_id, &shared_data.surreal.db).await;
     let user_id = match session {
         Some(session) => session.user_id,
         None => {
@@ -185,7 +185,7 @@ async fn user_route(
             }))
         }
     };
-    let user_option: Option<User> = db_handler::get_user(user_id, &shared_data.surreal.db).await;
+    let user_option: Option<User> = user_handler::get_user(user_id, &shared_data.surreal.db).await;
     let user = match user_option {
         Some(user) => user,
         None => {
@@ -212,7 +212,7 @@ async fn user_sessions(
     query: web::Query<GetUserParams>,
 ) -> actix_web::Result<impl Responder> {
     let session_id = &query.session_id;
-    let session = match db_handler::get_session(session_id, &shared_data.surreal.db).await {
+    let session = match user_handler::get_session(session_id, &shared_data.surreal.db).await {
         Some(val) => val,
         None => return Ok(web::Json(UserSessionResult { sessions: None })),
     };

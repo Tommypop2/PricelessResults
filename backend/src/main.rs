@@ -4,11 +4,12 @@ use actix_web::{
     App, HttpServer,
 };
 mod classes;
-mod db;
+mod database;
 mod user;
 mod user_tests;
+
 use actix_cors::Cors;
-use db::surrealdb_connection::SurrealDBRepo;
+use database::db::surrealdb_connection::SurrealDBRepo;
 use dotenv::dotenv;
 use serde::Deserialize;
 use surrealdb::sql::Thing;

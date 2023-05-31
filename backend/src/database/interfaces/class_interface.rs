@@ -17,12 +17,15 @@ pub async fn create_class(db: &Surreal<Client>, class: &Class) -> surrealdb::Res
     let new_class: ClassRecord = db.create("class").content(class).await?;
     Ok(new_class)
 }
-pub async fn read_class(db: &Surreal<Client>, id: String) -> surrealdb::Result<Class> {
-    let class: Class = db.select(("class", id)).await?;
+pub async fn read_class(db: &Surreal<Client>, id: String) -> surrealdb::Result<ClassRecord> {
+    let class: ClassRecord = db.select(("class", id)).await?;
     Ok(class)
 }
-pub async fn update_class(db: &Surreal<Client>, class: ClassRecord) -> surrealdb::Result<Class> {
-    let updated: Class = db.update(("class", &class.id)).content(class).await?;
+pub async fn update_class(
+    db: &Surreal<Client>,
+    class: ClassRecord,
+) -> surrealdb::Result<ClassRecord> {
+    let updated: ClassRecord = db.update(("class", &class.id)).content(class).await?;
     Ok(updated)
 }
 pub async fn delete_class(db: &Surreal<Client>, id: String) -> surrealdb::Result<()> {

@@ -1,6 +1,6 @@
 use crate::{
-    user::db_handler as user_db_handler,
-    user_tests::db_handler::{self, Test},
+    database::handlers::test_handler::{self, Test},
+    database::handlers::user_handler,
     AppState,
 };
 use actix_web::{get, post, web};
@@ -26,7 +26,7 @@ async fn create_test(
     json: web::Json<CreateTestParams>,
 ) -> actix_web::Result<impl actix_web::Responder> {
     let session_id = &json.session_id;
-    let session = user_db_handler::get_session(session_id, &state.surreal.db).await;
+    let session = user_handler::get_session(session_id, &state.surreal.db).await;
     let _ = match session {
         Some(session) => session,
         None => {
@@ -37,7 +37,7 @@ async fn create_test(
             }))
         }
     };
-    let test_result = db_handler::create_test(&state.surreal.db, &json.test).await;
+    let test_result = test_handler::create_test(&state.surreal.db, &json.test).await;
     let test = match test_result {
         Ok(test) => test,
         Err(error) => {
