@@ -14,6 +14,7 @@ import { useThemeContext } from "~/context/ThemeProvider";
 import { useUserContext } from "~/context/UserProvider";
 import { DropdownMenu } from "@kobalte/core";
 import styles from "./navbar.module.css";
+import { NavbarOption } from "./types";
 interface NavbarProps {
 	options?: NavbarOption[];
 	loggedInOptions?: NavbarOption[];
@@ -83,7 +84,7 @@ export default function Navbar(props: NavbarProps) {
 			ref={navbar}
 		>
 			<For each={options()}>
-				{(item) => {
+				{(item: NavbarOption) => {
 					return (
 						<div class="h-full flex">
 							<A
@@ -99,7 +100,8 @@ export default function Navbar(props: NavbarProps) {
 								}
 								end={true}
 							>
-								<span class="text-lg">{item.name}</span>
+								<span class="text-lg <sm:hidden">{item.name}</span>
+								<item.icon size={30} class="sm:hidden" />
 							</A>
 						</div>
 					);

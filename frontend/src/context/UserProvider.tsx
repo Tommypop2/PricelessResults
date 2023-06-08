@@ -17,9 +17,19 @@ type User = {
 	session_id: string;
 	admin: boolean;
 };
+type LoginResult = {
+	session_id?: string;
+	error?: string;
+	user?: Partial<User>;
+};
+type UserResult = {
+	success: boolean;
+	error?: string;
+	user?: Partial<User>;
+};
 const UserContext = createContext<{
 	user: Resource<User | undefined>;
-	login: (id_token: string) => Promise<void>;
+	login: (id_token: string) => Promise<string | undefined>;
 	logout: (session_id?: string | undefined) => Promise<void>;
 	invalidateSession: (session_id: string) => Promise<void>;
 	mutate: Setter<User | undefined>;
@@ -38,12 +48,10 @@ export const UserProvider: ParentComponent = (props) => {
 		const res = await fetch(
 			`${import.meta.env.VITE_SERVER_URI}/user/user?session_id=${sessionId}`
 		);
-		const userJson = await res.json();
-		if (userJson["success"] == false) {
-			return;
-		}
+		const userJson: UserResult = await res.json();
+		if (userJson.success == false) return;
 		let userData = userJson["user"];
-		userData["session_id"] = sessionId;
+		userData!.session_id = sessionId;
 		return userData as User;
 	});
 	const invalidateSession = async (session_id: string) => {
@@ -54,8 +62,7 @@ export const UserProvider: ParentComponent = (props) => {
 	const value = {
 		user,
 		login: async (id_token: string) => {
-			// This should be strongly typed in the future
-			const res = await (
+			const res: LoginResult = await (
 				await fetch(`${import.meta.env.VITE_SERVER_URI}/user/login`, {
 					credentials: "include",
 					method: "post",
@@ -65,12 +72,16 @@ export const UserProvider: ParentComponent = (props) => {
 					body: JSON.stringify({ id_token: id_token }),
 				})
 			).json();
+			let newUser = res.user;
+			if (!newUser) {
+				return res.error;
+			}
 			document.cookie = `session_id=${res.session_id}; max-age=${
 				1 * 24 * 60 * 60
 			}; SameSite=Strict; Secure; path=/`;
-			let newUser = res.user;
 			newUser["session_id"] = res.session_id;
-			mutate(newUser);
+			// By this time the user is no longer "partial" as it now has the `session_id` property
+			mutate(newUser as User);
 		},
 		logout: async (session_id = user()?.session_id) => {
 			if (!session_id) return;

@@ -18,6 +18,12 @@ import Navbar from "./components/Navbar/Navbar";
 import { NavbarProvider } from "./context/NavbarProvider";
 import { ThemeProvider, useThemeContext } from "./context/ThemeProvider";
 import { UserProvider } from "./context/UserProvider";
+import {
+	BsHouse,
+	BsQuestionCircle,
+	BsInfoCircle,
+	BsPieChartFill,
+} from "solid-icons/bs";
 export default function Root() {
 	return (
 		<Html lang="en" class="h-full w-full font-[source-sans]">
@@ -49,12 +55,24 @@ export default function Root() {
 											<div class="h-[50px]">
 												<Navbar
 													options={[
-														{ name: "Home", href: "/" },
-														{ name: "Help", href: "/help" },
-														{ name: "About", href: "/about" },
+														{ name: "Home", href: "/", icon: BsHouse },
+														{
+															name: "Help",
+															href: "/help",
+															icon: BsQuestionCircle,
+														},
+														{
+															name: "About",
+															href: "/about",
+															icon: BsInfoCircle,
+														},
 													]}
 													loggedInOptions={[
-														{ name: "Dashboard", href: "/user/dashboard" },
+														{
+															name: "Dashboard",
+															href: "/user/dashboard",
+															icon: BsPieChartFill,
+														},
 													]}
 												/>
 											</div>
