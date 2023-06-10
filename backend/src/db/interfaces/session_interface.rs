@@ -8,7 +8,6 @@ use super::user_interface::User;
 #[derive(Serialize, Deserialize)]
 pub struct Session {
     pub session_id: String,
-    pub user_id: String,
     pub user: RecordId,
     pub user_agent: Option<String>,
     pub creation_date: DateTime<Local>,
@@ -16,7 +15,6 @@ pub struct Session {
 #[derive(Deserialize, Debug)]
 pub struct SessionRecord {
     pub session_id: String,
-    pub user_id: String,
     pub user: User,
     pub user_agent: Option<String>,
     pub creation_date: DateTime<Local>,
@@ -56,7 +54,6 @@ pub async fn create_session<'a>(
         .create("session")
         .content(Session {
             session_id: session_id.clone(),
-            user_id: google_id.to_string(),
             user: RecordId {
                 id: google_id.into(),
                 tb: "user".to_string(),
