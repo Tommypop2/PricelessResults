@@ -1,10 +1,13 @@
 use crate::{
-    db::handlers::test_handler::{self, Test},
-    db::handlers::user_handler,
+    db::handlers::{
+        test_handler::{self, Test},
+        user_handler::is_session_id_valid,
+    },
     AppState,
 };
 use actix_web::{get, post, web};
 use serde::{Deserialize, Serialize};
+use test_handler::TestRecord;
 #[get("")]
 async fn index() -> actix_web::Result<impl actix_web::Responder> {
     Ok(format!("Hello"))
@@ -12,7 +15,7 @@ async fn index() -> actix_web::Result<impl actix_web::Responder> {
 #[derive(Serialize)]
 struct CreateTestResult {
     success: bool,
-    test: Option<Test>,
+    test: Option<TestRecord>,
     error: Option<String>,
 }
 #[derive(Deserialize)]
@@ -26,17 +29,13 @@ async fn create_test(
     json: web::Json<CreateTestParams>,
 ) -> actix_web::Result<impl actix_web::Responder> {
     let session_id = &json.session_id;
-    let session = user_handler::get_session(session_id, &state.surreal.db).await;
-    let _ = match session {
-        Some(session) => session,
-        None => {
-            return Ok(web::Json(CreateTestResult {
-                success: false,
-                error: Some("No session with this id".into()),
-                test: None,
-            }))
-        }
-    };
+    if !is_session_id_valid(&state.surreal.db, session_id).await {
+        return Ok(web::Json(CreateTestResult {
+            success: false,
+            error: Some("No session with this id".into()),
+            test: None,
+        }));
+    }
     let test_result = test_handler::create_test(&state.surreal.db, &json.test).await;
     let test = match test_result {
         Ok(test) => test,
