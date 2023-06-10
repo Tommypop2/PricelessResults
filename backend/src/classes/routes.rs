@@ -1,7 +1,7 @@
 use crate::{
     db::handlers::{
         class_handler::{self, Class, ClassRecord},
-        user_handler,
+        user_handler, session_handler,
     },
     AppState,
 };
@@ -51,7 +51,7 @@ async fn create_class(
     json: web::Json<CreateClassParams>,
 ) -> actix_web::Result<impl actix_web::Responder> {
     let session_id = &json.session_id;
-    let session = user_handler::get_session(session_id, &state.surreal.db).await;
+    let session = session_handler::get_session(session_id, &state.surreal.db).await;
     let _ = match session {
         Some(session) => session,
         None => return Ok(ClassResult::failure_json("No session with this id")),
@@ -75,7 +75,7 @@ async fn read_class(
     // I'm still deciding how best to handle user authentication. I'll probably use middleware in the future to authenticate and authorize based
     // on the route. So, for now the following is just going to be copied and pasted everywhere:
     let session_id = &query.session_id;
-    let session = user_handler::get_session(session_id, &state.surreal.db).await;
+    let session = session_handler::get_session(session_id, &state.surreal.db).await;
     let _ = match session {
         Some(session) => session,
         None => return Ok(ClassResult::failure_json("No session with this id")),

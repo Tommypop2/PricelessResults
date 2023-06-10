@@ -1,7 +1,7 @@
 use crate::{
     db::handlers::{
         test_handler::{self, Test},
-        user_handler::is_session_id_valid,
+        session_handler::is_session_id_valid,
     },
     AppState,
 };

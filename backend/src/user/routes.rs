@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use surrealdb::Response;
 // This is terrible structure: will be fixed in the future hopefully
 use crate::{
-    db::handlers::user_handler::{self, Session, User},
+    db::handlers::{user_handler::{self, Session, User}, session_handler},
     AppState,
 };
 // Stuctures
@@ -121,7 +121,7 @@ async fn login_route(
         usr
     };
     let session_result =
-        user_handler::create_session(&shared_data.surreal.db, &google_id, user_agent).await;
+        session_handler::create_session(&shared_data.surreal.db, &google_id, user_agent).await;
     let session = match session_result {
         Ok(session) => session,
         Err(err) => {
@@ -153,7 +153,7 @@ async fn logout_route(
 ) -> actix_web::Result<impl Responder> {
     let session_id = &query.session_id;
     // Don't need to validate, db just won't delete anything if session doesn't exist
-    user_handler::delete_session(session_id, &shared_data.surreal.db).await;
+    session_handler::delete_session(session_id, &shared_data.surreal.db).await;
     Ok(web::Json(LogoutResult { error: None }))
 }
 #[derive(Deserialize, Serialize)]
@@ -173,7 +173,7 @@ async fn user_route(
 ) -> actix_web::Result<impl Responder> {
     // Having multiple queries here isn't great, but should be solved in the future with graph queries
     let session_id = &query.session_id;
-    let session = user_handler::get_session(session_id, &shared_data.surreal.db).await;
+    let session = session_handler::get_session(session_id, &shared_data.surreal.db).await;
     let user_id = match session {
         Some(session) => session.user_id,
         None => {
@@ -211,7 +211,7 @@ async fn user_sessions(
     query: web::Query<GetUserParams>,
 ) -> actix_web::Result<impl Responder> {
     let session_id = &query.session_id;
-    let session = match user_handler::get_session(session_id, &shared_data.surreal.db).await {
+    let session = match session_handler::get_session(session_id, &shared_data.surreal.db).await {
         Some(val) => val,
         None => return Ok(web::Json(UserSessionResult { sessions: None })),
     };
