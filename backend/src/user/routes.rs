@@ -126,7 +126,7 @@ async fn login_route(
         }
     };
     Ok(web::Json(LoginResult {
-        session_id: Some(session.session_id),
+        session_id: Some(session.id.id.to_string()),
         error: None,
         user,
     }))

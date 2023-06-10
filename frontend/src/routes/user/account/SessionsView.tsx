@@ -10,7 +10,7 @@ type SessionsViewProps = {
 	session_id?: string;
 	deleteSession: (session_id: string) => void;
 };
-type Session = { session_id: string; user_id: string; user_agent: string };
+type Session = { id: string; user_id: string; user_agent: string };
 export default function SessionsView(props: SessionsViewProps) {
 	const [user_sessions, { mutate }] = createResource(async () => {
 		if (!props.session_id) return;
@@ -20,7 +20,11 @@ export default function SessionsView(props: SessionsViewProps) {
 			}`
 		);
 		const resJson = (await res.json())["sessions"] as Session[];
-		return resJson;
+		const mapped = resJson.map((session) => {
+			session.id = session.id.replace("session:", "");
+			return session;
+		});
+		return mapped;
 	});
 
 	return (
@@ -29,17 +33,17 @@ export default function SessionsView(props: SessionsViewProps) {
 				{(item) => {
 					return (
 						<div class="flex flex-col">
-							<Show when={item.session_id === props.session_id}>
+							<Show when={item.id === props.session_id}>
 								This is your current session
 							</Show>
-							<span>{item.session_id}</span>
+							<span>{item.id}</span>
 							<span>{item.user_agent}</span>
 							<button
 								onClick={() => {
 									let sessions = user_sessions();
-									props.deleteSession(item.session_id);
+									props.deleteSession(item.id);
 									sessions = sessions?.filter(
-										(session) => session.session_id != item.session_id
+										(session) => session.id != item.id
 									);
 									mutate(sessions);
 								}}

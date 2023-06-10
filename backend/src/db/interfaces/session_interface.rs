@@ -7,15 +7,13 @@ use super::user_interface::User;
 
 #[derive(Serialize, Deserialize)]
 pub struct Session {
-    pub session_id: String,
     pub user: RecordId,
     pub user_agent: Option<String>,
     pub creation_date: DateTime<Local>,
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SessionRecord<T> {
-    // pub id: String,
-    pub session_id: String,
+    pub id: RecordId,
     pub user: T,
     pub user_agent: Option<String>,
     pub creation_date: DateTime<Local>,
@@ -36,8 +34,7 @@ pub async fn get_session(
 ) -> Option<SessionRecord<User>> {
     let session: Option<SessionRecord<User>> = db
         .query(format!(
-            "SELECT *, user.* FROM session WHERE session_id = \"{}\"",
-            session_id
+            "SELECT *, user.* FROM session:{session_id}"
         ))
         .await
         .unwrap()
@@ -52,9 +49,8 @@ pub async fn create_session<'a>(
 ) -> surrealdb::Result<SessionRecord<RecordId>> {
     let session_id = generate_random_string(64);
     let created: SessionRecord<RecordId> = db
-        .create(("session", session_id.clone()))
+        .create(("session", &session_id))
         .content(Session {
-            session_id: session_id.clone(),
             user: RecordId {
                 id: google_id.into(),
                 tb: "user".to_string(),
