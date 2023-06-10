@@ -1,12 +1,13 @@
 use actix_web::{get, post, web, HttpRequest, Responder};
 use google_oauth::AsyncClient;
 use serde::{Deserialize, Serialize};
-use surrealdb::Response;
+use session_handler::{Session, SessionRecord};
+use surrealdb::{opt::RecordId, Response};
 // This is terrible structure: will be fixed in the future hopefully
 use crate::{
     db::handlers::{
         session_handler,
-        user_handler::{self, Session, User},
+        user_handler::{self, User},
     },
     AppState,
 };
@@ -93,7 +94,9 @@ async fn login_route(
         };
         // Create user
         let user = User::create(google_id.clone(), username, email_string, url, false);
-        let usr = user_handler::create_user(&shared_data.surreal.db, &user).await.unwrap();
+        let usr = user_handler::create_user(&shared_data.surreal.db, &user)
+            .await
+            .unwrap();
         Some(usr)
     } else {
         // Retrieve user
@@ -184,7 +187,7 @@ async fn user_route(
 }
 #[derive(Serialize)]
 struct UserSessionResult {
-    sessions: Option<Vec<Session>>,
+    sessions: Option<Vec<SessionRecord<RecordId>>>,
 }
 #[get("/sessions")]
 async fn user_sessions(
@@ -196,11 +199,11 @@ async fn user_sessions(
         None => return Ok(web::Json(UserSessionResult { sessions: None })),
     };
     let user_id = session.user.user_id;
-    let sessions: Vec<Session> = state
+    let sessions: Vec<SessionRecord<RecordId>> = state
         .surreal
         .db
         .query(format!(
-            "SELECT * FROM session WHERE user_id = \"{user_id}\"",
+            "SELECT * FROM session WHERE user.user_id = \"{user_id}\"",
         ))
         .await
         .unwrap()

@@ -1,4 +1,3 @@
-use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use surrealdb::{engine::remote::ws::Client, Response, Surreal};
 
@@ -27,13 +26,6 @@ impl User {
             admin,
         }
     }
-}
-#[derive(Serialize, Deserialize)]
-pub struct Session {
-    pub session_id: String,
-    pub user_id: String,
-    pub user_agent: Option<String>,
-    pub creation_date: DateTime<Local>,
 }
 pub async fn get_user<T>(id: String, db: &Surreal<Client>) -> Option<T>
 where

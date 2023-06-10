@@ -12,10 +12,11 @@ pub struct Session {
     pub user_agent: Option<String>,
     pub creation_date: DateTime<Local>,
 }
-#[derive(Deserialize, Debug)]
-pub struct SessionRecord {
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SessionRecord<T> {
+    // pub id: String,
     pub session_id: String,
-    pub user: User,
+    pub user: T,
     pub user_agent: Option<String>,
     pub creation_date: DateTime<Local>,
 }
@@ -32,8 +33,8 @@ fn generate_random_string(length: i32) -> String {
 pub async fn get_session(
     session_id: &str,
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
-) -> Option<SessionRecord> {
-    let session: Option<SessionRecord> = db
+) -> Option<SessionRecord<User>> {
+    let session: Option<SessionRecord<User>> = db
         .query(format!(
             "SELECT *, user.* FROM session WHERE session_id = \"{}\"",
             session_id
@@ -48,10 +49,10 @@ pub async fn create_session<'a>(
     db: &'a Surreal<surrealdb::engine::remote::ws::Client>,
     google_id: &'a String,
     user_agent: Option<String>,
-) -> surrealdb::Result<Session> {
+) -> surrealdb::Result<SessionRecord<RecordId>> {
     let session_id = generate_random_string(64);
-    let created: Session = db
-        .create("session")
+    let created: SessionRecord<RecordId> = db
+        .create(("session", session_id.clone()))
         .content(Session {
             session_id: session_id.clone(),
             user: RecordId {
