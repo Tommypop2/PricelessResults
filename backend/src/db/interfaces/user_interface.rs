@@ -1,18 +1,7 @@
 use chrono::{DateTime, Local};
-use rand::Rng;
 use serde::{Deserialize, Serialize};
-use surrealdb::{Response, Surreal};
-// Users and sessions are colocated, as that makes sense for this case, as sessions will only be used with users, and mostly vice versa
-const CHARACTERS: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-fn generate_random_string(length: i32) -> String {
-    let mut rng = rand::thread_rng();
-    let mut result: String = "".into();
-    let chars_len = CHARACTERS.len();
-    for _ in 0..length {
-        result.push(CHARACTERS.chars().nth(rng.gen_range(0..chars_len)).unwrap());
-    }
-    result
-}
+use surrealdb::{engine::remote::ws::Client, Response, Surreal};
+
 // Structs
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {
@@ -22,7 +11,23 @@ pub struct User {
     pub picture: String,
     pub admin: bool,
 }
-
+impl User {
+    pub fn create(
+        user_id: String,
+        username: String,
+        email: String,
+        picture: String,
+        admin: bool,
+    ) -> User {
+        User {
+            user_id,
+            username,
+            email,
+            picture,
+            admin,
+        }
+    }
+}
 #[derive(Serialize, Deserialize)]
 pub struct Session {
     pub session_id: String,
@@ -30,10 +35,7 @@ pub struct Session {
     pub user_agent: Option<String>,
     pub creation_date: DateTime<Local>,
 }
-pub async fn get_user<T>(
-    id: String,
-    db: &Surreal<surrealdb::engine::remote::ws::Client>,
-) -> Option<T>
+pub async fn get_user<T>(id: String, db: &Surreal<Client>) -> Option<T>
 where
     for<'a> T: Deserialize<'a>,
 {
@@ -42,4 +44,11 @@ where
         .await
         .unwrap();
     user_response.take(0).unwrap()
+}
+pub async fn create_user(
+    db: &Surreal<surrealdb::engine::remote::ws::Client>,
+    user: &User,
+) -> surrealdb::Result<User> {
+    let new_usr: User = db.create(("user", &user.user_id)).content(user).await?;
+    Ok(new_usr)
 }

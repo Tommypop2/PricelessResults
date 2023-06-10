@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use surrealdb::Response;
 // This is terrible structure: will be fixed in the future hopefully
 use crate::{
-    db::handlers::{user_handler::{self, Session, User}, session_handler},
+    db::handlers::{
+        session_handler,
+        user_handler::{self, Session, User},
+    },
     AppState,
 };
 // Stuctures
@@ -72,12 +75,7 @@ async fn login_route(
     };
     let result: Option<User> =
         user_handler::get_user(google_id.clone(), &shared_data.surreal.db).await;
-    let value = match result {
-        // Kind of an annoying hack
-        Some(_) => 1,
-        None => 0,
-    };
-    let user = if value == 0 {
+    let user = if result.is_none() {
         // User doesn't already have account
         let email_string = match email {
             Some(value) => value,
@@ -93,21 +91,12 @@ async fn login_route(
             Some(url) => url,
             None => generate_picture_url(&username),
         };
-        let usr: User = shared_data
-            .surreal
-            .db
-            .create("user")
-            .content(User {
-                user_id: google_id.clone(),
-                username,
-                email: email_string,
-                picture: url,
-                admin: false,
-            })
-            .await
-            .unwrap();
+        // Create user
+        let user = User::create(google_id.clone(), username, email_string, url, false);
+        let usr = user_handler::create_user(&shared_data.surreal.db, &user).await.unwrap();
         Some(usr)
     } else {
+        // Retrieve user
         let mut user_response: Response = shared_data
             .surreal
             .db
@@ -120,6 +109,7 @@ async fn login_route(
         let usr: Option<User> = user_response.take(0).unwrap();
         usr
     };
+    // Create session
     let session_result =
         session_handler::create_session(&shared_data.surreal.db, &google_id, user_agent).await;
     let session = match session_result {
@@ -168,14 +158,14 @@ struct GetUserParams {
 }
 #[get("/user")]
 async fn user_route(
-    shared_data: web::Data<AppState>,
+    state: web::Data<AppState>,
     query: web::Query<GetUserParams>,
 ) -> actix_web::Result<impl Responder> {
     // Having multiple queries here isn't great, but should be solved in the future with graph queries
     let session_id = &query.session_id;
-    let session = session_handler::get_session(session_id, &shared_data.surreal.db).await;
-    let user_id = match session {
-        Some(session) => session.user_id,
+    let session = session_handler::get_session(session_id, &state.surreal.db).await;
+    let user = match session {
+        Some(session) => session.user,
         None => {
             return Ok(web::Json(GetUserResult {
                 success: false,
@@ -184,21 +174,12 @@ async fn user_route(
             }))
         }
     };
-    let user_option: Option<User> = user_handler::get_user(user_id, &shared_data.surreal.db).await;
-    let user = match user_option {
-        Some(user) => user,
-        None => {
-            return Ok(web::Json(GetUserResult {
-                success: false,
-                error: Some("No user with this session".into()),
-                user: None,
-            }))
-        }
-    };
+
     Ok(web::Json(GetUserResult {
         error: None,
         success: true,
         user: Some(user),
+        // user: None,
     }))
 }
 #[derive(Serialize)]
@@ -207,16 +188,15 @@ struct UserSessionResult {
 }
 #[get("/sessions")]
 async fn user_sessions(
-    shared_data: web::Data<AppState>,
+    state: web::Data<AppState>,
     query: web::Query<GetUserParams>,
 ) -> actix_web::Result<impl Responder> {
-    let session_id = &query.session_id;
-    let session = match session_handler::get_session(session_id, &shared_data.surreal.db).await {
+    let session = match session_handler::get_session(&query.session_id, &state.surreal.db).await {
         Some(val) => val,
         None => return Ok(web::Json(UserSessionResult { sessions: None })),
     };
-    let user_id = session.user_id;
-    let sessions: Vec<Session> = shared_data
+    let user_id = session.user.user_id;
+    let sessions: Vec<Session> = state
         .surreal
         .db
         .query(format!(
