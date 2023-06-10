@@ -1,21 +1,26 @@
+use crate::db::shared::json_traits::JsonResult;
 use crate::{
     db::handlers::{
         class_handler::{self, Class, ClassRecord},
-        user_handler, session_handler,
+        session_handler,
     },
     AppState,
 };
 use actix_web::{get, post, web};
+use chrono::Local;
 use serde::{Deserialize, Serialize};
-
 #[get("")]
 async fn index() -> String {
     format!("Hi, welcome to the base route for the class endpoint")
 }
 #[derive(Deserialize)]
+struct CreateClassClass {
+    name: String,
+}
+#[derive(Deserialize)]
 struct CreateClassParams {
     session_id: String,
-    class: Class,
+    class: CreateClassClass,
 }
 #[derive(Serialize)]
 struct ClassResult {
@@ -23,26 +28,20 @@ struct ClassResult {
     error: Option<String>,
     class: Option<ClassRecord>,
 }
-impl ClassResult {
+impl JsonResult<ClassRecord> for ClassResult {
+    fn success(data: ClassRecord) -> ClassResult {
+        Self {
+            success: true,
+            error: None,
+            class: Some(data),
+        }
+    }
     fn failure(message: String) -> ClassResult {
-        return ClassResult {
+        Self {
             success: false,
             error: Some(message),
             class: None,
-        };
-    }
-    pub fn failure_json(message: &'static str) -> web::Json<ClassResult> {
-        return web::Json(ClassResult::failure((*message).to_string()));
-    }
-    pub fn success(class: ClassRecord) -> ClassResult {
-        return ClassResult {
-            success: true,
-            error: None,
-            class: Some(class),
-        };
-    }
-    pub fn success_json(class: ClassRecord) -> web::Json<ClassResult> {
-        return web::Json(ClassResult::success(class));
+        }
     }
 }
 #[post("create")]
@@ -51,12 +50,13 @@ async fn create_class(
     json: web::Json<CreateClassParams>,
 ) -> actix_web::Result<impl actix_web::Responder> {
     let session_id = &json.session_id;
-    let session = session_handler::get_session(session_id, &state.surreal.db).await;
-    let _ = match session {
+    let user_session = session_handler::get_session(session_id, &state.surreal.db).await;
+    let session = match user_session {
         Some(session) => session,
         None => return Ok(ClassResult::failure_json("No session with this id")),
     };
-    let class = match class_handler::create_class(&state.surreal.db, &json.class).await {
+    let new_class = Class::create(json.class.name.clone(), Local::now(), session.user.user_id);
+    let class = match class_handler::create_class(&state.surreal.db, &new_class).await {
         Ok(class) => class,
         Err(_) => return Ok(ClassResult::failure_json("Couldn't create class")),
     };
@@ -67,7 +67,7 @@ struct ReadClassParams {
     session_id: String,
     id: String,
 }
-#[get("read")]
+#[get("get_single")]
 async fn read_class(
     state: web::Data<AppState>,
     query: web::Query<ReadClassParams>,
@@ -87,6 +87,59 @@ async fn read_class(
     };
     Ok(ClassResult::success_json(class))
 }
+#[derive(Serialize)]
+struct ClassesResult {
+    success: bool,
+    error: Option<String>,
+    classes: Option<Vec<ClassRecord>>,
+}
+impl JsonResult<Vec<ClassRecord>> for ClassesResult {
+    fn success(data: Vec<ClassRecord>) -> ClassesResult {
+        Self {
+            success: true,
+            error: None,
+            classes: Some(data),
+        }
+    }
+    fn failure(message: String) -> ClassesResult {
+        Self {
+            success: false,
+            error: Some(message),
+            classes: None,
+        }
+    }
+}
+#[derive(Deserialize)]
+struct ReadClassesParams {
+    session_id: String,
+}
+#[get("get")]
+async fn read_classes(
+    state: web::Data<AppState>,
+    query: web::Query<ReadClassesParams>,
+) -> actix_web::Result<impl actix_web::Responder> {
+    let session_id = &query.session_id;
+    let user_session = session_handler::get_session(session_id, &state.surreal.db).await;
+    let session = match user_session {
+        Some(session) => session,
+        None => return Ok(ClassesResult::failure_json("No session with this id")),
+    };
+    let classes: Vec<ClassRecord> = state
+        .surreal
+        .db
+        .query(format!(
+            "SELECT * FROM classes WHERE class.creator.user_id = {}",
+            session.user.user_id
+        ))
+        .await
+        .unwrap()
+        .take(0)
+        .unwrap();
+    Ok(web::Json(ClassesResult::success(classes)))
+}
 pub fn class_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(index).service(create_class).service(read_class);
+    cfg.service(index)
+        .service(create_class)
+        .service(read_class)
+        .service(read_classes);
 }

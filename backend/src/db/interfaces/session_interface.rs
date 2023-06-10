@@ -12,7 +12,7 @@ pub struct Session {
     pub creation_date: DateTime<Local>,
 }
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SessionRecord<T> {
+pub struct SessionRecord<T = RecordId> {
     pub id: RecordId,
     pub user: T,
     pub user_agent: Option<String>,
@@ -33,9 +33,7 @@ pub async fn get_session(
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
 ) -> Option<SessionRecord<User>> {
     let session: Option<SessionRecord<User>> = db
-        .query(format!(
-            "SELECT *, user.* FROM session:{session_id}"
-        ))
+        .query(format!("SELECT *, user.* FROM session:{session_id}"))
         .await
         .unwrap()
         .take(0)
@@ -46,9 +44,9 @@ pub async fn create_session<'a>(
     db: &'a Surreal<surrealdb::engine::remote::ws::Client>,
     google_id: &'a String,
     user_agent: Option<String>,
-) -> surrealdb::Result<SessionRecord<RecordId>> {
+) -> surrealdb::Result<SessionRecord> {
     let session_id = generate_random_string(64);
-    let created: SessionRecord<RecordId> = db
+    let created: SessionRecord = db
         .create(("session", &session_id))
         .content(Session {
             user: RecordId {
@@ -63,10 +61,5 @@ pub async fn create_session<'a>(
 }
 pub async fn delete_session(session_id: &str, db: &Surreal<surrealdb::engine::remote::ws::Client>) {
     // Don't need to validate, db just won't delete anything if session doesn't exist
-    db.query(format!(
-        "DELETE session WHERE session_id = \"{}\"",
-        session_id
-    ))
-    .await
-    .unwrap();
+    let _: SessionRecord = db.delete(("session", session_id)).await.unwrap();
 }

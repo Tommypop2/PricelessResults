@@ -1,17 +1,31 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use surrealdb::{engine::remote::ws::Client, Surreal};
+use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 // Classes will probably just be an alias for applying tests to many users at once, and for class averages. Other than that, they shouldn't actually need to have much functionality
 #[derive(Serialize, Deserialize)]
 pub struct Class {
     pub name: String,
     pub creation_date: DateTime<Local>,
+    pub creator: RecordId,
+}
+impl Class {
+    pub fn create(name: String, creation_date: DateTime<Local>, creator_id: String) -> Class {
+        Class {
+            name,
+            creation_date,
+            creator: RecordId {
+                tb: "user".to_owned(),
+                id: creator_id.into(),
+            },
+        }
+    }
 }
 #[derive(Serialize, Deserialize)]
-pub struct ClassRecord {
+pub struct ClassRecord<T = RecordId> {
     pub name: String,
     pub id: String,
     pub creation_date: DateTime<Local>,
+    pub creator: T,
 }
 pub async fn create_class(db: &Surreal<Client>, class: &Class) -> surrealdb::Result<ClassRecord> {
     let new_class: ClassRecord = db.create("class").content(class).await?;

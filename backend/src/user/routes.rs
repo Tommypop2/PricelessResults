@@ -5,9 +5,12 @@ use session_handler::{Session, SessionRecord};
 use surrealdb::{opt::RecordId, Response};
 // This is terrible structure: will be fixed in the future hopefully
 use crate::{
-    db::handlers::{
-        session_handler,
-        user_handler::{self, User},
+    db::{
+        handlers::{
+            session_handler,
+            user_handler::{self, User},
+        },
+        shared::json_traits::JsonResult,
     },
     AppState,
 };
@@ -27,6 +30,22 @@ fn generate_picture_url(username: &str) -> String {
     let usr_str = username.replace(" ", "+");
     format!("https://ui-avatars.com/api/?name={usr_str}")
 }
+impl JsonResult<SessionRecord<User>> for LoginResult {
+    fn success(data: SessionRecord<User>) -> Self {
+        Self {
+            session_id: Some(data.id.id.to_string()),
+            error: None,
+            user: Some(data.user),
+        }
+    }
+    fn failure(message: String) -> Self {
+        Self {
+            session_id: None,
+            error: Some(message),
+            user: None,
+        }
+    }
+}
 // Routes
 #[post("/login")]
 async fn login_route(
@@ -44,16 +63,9 @@ async fn login_route(
         Ok(val) => Some(val.to_string()),
         Err(_) => None,
     };
-    // let user_agent = user_agent_opt.unwrap().to_str().unwrap();
     let data = match data_result {
         Ok(res) => res,
-        Err(_) => {
-            return Ok(web::Json(LoginResult {
-                session_id: None,
-                error: Some("yes".into()),
-                user: None,
-            }))
-        }
+        Err(_) => return Ok(LoginResult::failure_json("Invalid id token")),
     };
     let google_id: String = data.sub;
     let username = match data.name {
@@ -81,11 +93,9 @@ async fn login_route(
         let email_string = match email {
             Some(value) => value,
             None => {
-                return Ok(web::Json(LoginResult {
-                    session_id: None,
-                    error: Some("This account has no email".to_string()),
-                    user: None,
-                }));
+                return Ok(LoginResult::failure_json(
+                    "This account has no associated email",
+                ));
             }
         };
         let url = match data.picture {
@@ -118,11 +128,7 @@ async fn login_route(
     let session = match session_result {
         Ok(session) => session,
         Err(err) => {
-            return Ok(web::Json(LoginResult {
-                session_id: None,
-                error: Some(err.to_string()),
-                user: None,
-            }));
+            return Ok(LoginResult::failure_json(&err.to_string()));
         }
     };
     Ok(web::Json(LoginResult {

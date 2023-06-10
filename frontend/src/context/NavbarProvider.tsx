@@ -6,6 +6,7 @@ import {
 	createSignal,
 	useContext,
 } from "solid-js";
+import { NavbarOption } from "~/components/Navbar/types";
 const NavbarContext = createContext<{
 	navbarRef: Accessor<HTMLDivElement | undefined>;
 	setNavbarRef: Setter<HTMLDivElement | undefined>;

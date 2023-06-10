@@ -1,16 +1,28 @@
 use serde::{Deserialize, Serialize};
-use surrealdb::Surreal;
+use surrealdb::{opt::RecordId, Surreal};
 #[derive(Serialize, Deserialize)]
 pub struct Test {
     pub name: String,
     pub max_score: u32,
+    pub creator: RecordId,
 }
-
+impl Test {
+    pub fn create(name: String, max_score: u32, creator_id: String) -> Test {
+        Test {
+            name,
+            max_score,
+            creator: RecordId {
+                tb: "user".to_owned(),
+                id: creator_id.into(),
+            },
+        }
+    }
+}
 #[derive(Serialize, Deserialize)]
-pub struct TestRecord {
+pub struct TestRecord<T = RecordId> {
     pub name: String,
     pub max_score: u32,
-    pub id: String,
+    pub id: T,
 }
 pub async fn create_test(
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
@@ -30,7 +42,10 @@ pub async fn update_test(
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
     test: TestRecord,
 ) -> surrealdb::Result<TestRecord> {
-    let updated: TestRecord = db.update(("test", &test.id)).content(test).await?;
+    let updated: TestRecord = db
+        .update(("test", &test.id.id.to_string()))
+        .content(test)
+        .await?;
 
     Ok(updated)
 }
