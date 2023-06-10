@@ -1,11 +1,23 @@
 use chrono::{DateTime, Local};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use surrealdb::Surreal;
+use surrealdb::{opt::RecordId, Surreal};
+
+use super::user_interface::User;
+
 #[derive(Serialize, Deserialize)]
 pub struct Session {
     pub session_id: String,
     pub user_id: String,
+    pub user: RecordId,
+    pub user_agent: Option<String>,
+    pub creation_date: DateTime<Local>,
+}
+#[derive(Deserialize, Debug)]
+pub struct SessionRecord {
+    pub session_id: String,
+    pub user_id: String,
+    pub user: User,
     pub user_agent: Option<String>,
     pub creation_date: DateTime<Local>,
 }
@@ -22,10 +34,10 @@ fn generate_random_string(length: i32) -> String {
 pub async fn get_session(
     session_id: &str,
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
-) -> Option<Session> {
-    let session: Option<Session> = db
+) -> Option<SessionRecord> {
+    let session: Option<SessionRecord> = db
         .query(format!(
-            "SELECT * FROM session WHERE session_id = \"{}\"",
+            "SELECT *, user.* FROM session WHERE session_id = \"{}\"",
             session_id
         ))
         .await
@@ -34,9 +46,9 @@ pub async fn get_session(
         .unwrap_or(None);
     session
 }
-pub async fn create_session(
-    db: &Surreal<surrealdb::engine::remote::ws::Client>,
-    google_id: &String,
+pub async fn create_session<'a>(
+    db: &'a Surreal<surrealdb::engine::remote::ws::Client>,
+    google_id: &'a String,
     user_agent: Option<String>,
 ) -> surrealdb::Result<Session> {
     let session_id = generate_random_string(64);
@@ -45,6 +57,10 @@ pub async fn create_session(
         .content(Session {
             session_id: session_id.clone(),
             user_id: google_id.to_string(),
+            user: RecordId {
+                id: google_id.into(),
+                tb: "user".to_string(),
+            },
             user_agent,
             creation_date: Local::now(),
         })
