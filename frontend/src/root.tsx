@@ -24,7 +24,11 @@ import {
 	BsInfoCircle,
 	BsPieChartFill,
 } from "solid-icons/bs";
+import { useRegisterSW } from "virtual:pwa-register/solid";
 export default function Root() {
+	if (globalThis.navigator) {
+		useRegisterSW({ immediate: true });
+	}
 	return (
 		<Html lang="en" class="h-full w-full font-[source-sans]">
 			<Head>
@@ -34,6 +38,7 @@ export default function Root() {
 				<Meta name="description" content="The world's coolest results system" />
 				<Meta property="og:image" content="/512x512.webp" />
 				<Meta property="og:title" content="The coolest results system" />
+				<Link rel="manifest" href="/manifest.webmanifest" />
 				{/* Add google gsi globally. This is not ideal, but they don't distribute it via npm yet */}
 				<script
 					src="https://accounts.google.com/gsi/client"

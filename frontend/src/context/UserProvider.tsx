@@ -45,9 +45,14 @@ export const UserProvider: ParentComponent = (props) => {
 			isServer ? event.request.headers.get("cookie") ?? "" : document.cookie
 		)["session_id"];
 		if (!sessionId) return;
-		const res = await fetch(
-			`${import.meta.env.VITE_SERVER_URI}/user/user?session_id=${sessionId}`
-		);
+		let res: Response;
+		try {
+			res = await fetch(
+				`${import.meta.env.VITE_SERVER_URI}/user/user?session_id=${sessionId}`
+			);
+		} catch {
+			return;
+		}
 		const userJson: UserResult = await res.json();
 		if (userJson.success == false) return;
 		let userData = userJson["user"];
