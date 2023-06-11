@@ -27,6 +27,27 @@ export default defineConfig({
 				navigateFallback: null,
 			},
 			base: "/",
+			manifest: {
+				name: "Priceless Results",
+				short_name: "Priceless Results",
+				description: "Very cool results system",
+				start_url: "/",
+				icons: [
+					{
+						src: "/android-chrome-192x192.png",
+						sizes: "192x192",
+						type: "image/png",
+					},
+					{
+						src: "/android-chrome-512x512.png",
+						sizes: "512x512",
+						type: "image/png",
+					},
+				],
+				theme_color: "#ffffff",
+				background_color: "#ffffff",
+				display: "standalone",
+			},
 		}),
 	],
 });
