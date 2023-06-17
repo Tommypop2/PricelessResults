@@ -23,7 +23,6 @@ async fn index(
     state: web::Data<AppState>,
     query: web::Query<GetTestsParams>,
 ) -> actix_web::Result<impl actix_web::Responder> {
-    dbg!(&query.session_id);
     let user_session = session_handler::get_session(&query.session_id, &state.surreal.db).await;
     let session = match user_session {
         Some(session) => session,

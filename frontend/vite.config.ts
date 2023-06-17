@@ -9,7 +9,7 @@ export default defineConfig({
 		UnoCss(),
 		VitePWA({
 			registerType: "autoUpdate",
-			devOptions: { enabled: true, type: "module" },
+			// devOptions: { enabled: true, type: "module" },
 			workbox: {
 				// Shouldn't really precache much because the user's storage space could be limited. However, it's worth precaching some of the javascript and css
 				globPatterns: ["**/*.{js,css}"],

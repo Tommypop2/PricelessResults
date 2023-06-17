@@ -1,7 +1,7 @@
 import { Show, Suspense, createResource } from "solid-js";
 import { useNavigate } from "solid-start";
-import ClassesView, { Class } from "~/components/admin/classes/ClassesView";
-import TestsView, { Test } from "~/components/admin/tests/TestsView";
+import ClassesView, { Class } from "~/components/classes/ClassesView";
+import TestsView, { Test } from "~/components/tests/TestsView";
 import { useUserContext } from "~/context/UserProvider";
 
 export default function Admin() {
