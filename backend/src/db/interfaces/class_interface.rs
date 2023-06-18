@@ -23,9 +23,9 @@ impl Class {
 #[derive(Serialize, Deserialize)]
 pub struct ClassRecord<T = RecordId> {
     pub name: String,
-    pub id: String,
+    pub id: T,
     pub creation_date: DateTime<Local>,
-    pub creator: T,
+    pub creator: RecordId,
 }
 pub async fn create_class(db: &Surreal<Client>, class: &Class) -> surrealdb::Result<ClassRecord> {
     let new_class: ClassRecord = db.create("class").content(class).await?;
@@ -39,7 +39,10 @@ pub async fn update_class(
     db: &Surreal<Client>,
     class: ClassRecord,
 ) -> surrealdb::Result<ClassRecord> {
-    let updated: ClassRecord = db.update(("class", &class.id)).content(class).await?;
+    let updated: ClassRecord = db
+        .update(("class", &class.id.id.to_string()))
+        .content(class)
+        .await?;
     Ok(updated)
 }
 pub async fn delete_class(db: &Surreal<Client>, id: String) -> surrealdb::Result<()> {

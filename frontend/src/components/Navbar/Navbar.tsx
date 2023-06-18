@@ -7,9 +7,9 @@ import {
 	createSignal,
 	onMount,
 } from "solid-js";
-import { A } from "solid-start";
+import { A, useNavigate } from "solid-start";
 import { useNavbarContext } from "~/context/NavbarProvider";
-import { BsMoon, BsSun } from "solid-icons/bs";
+import { BsMoon, BsPlus, BsSun } from "solid-icons/bs";
 import { useThemeContext } from "~/context/ThemeProvider";
 import { useUserContext } from "~/context/UserProvider";
 import { DropdownMenu } from "@kobalte/core";
@@ -46,6 +46,7 @@ export default function Navbar(props: NavbarProps) {
 		HTMLDivElement | undefined
 	>();
 	if (props.options) navCtx.setOptions(props.options);
+	const navigate = useNavigate();
 	onMount(() => {
 		if (!navbar) return;
 		navCtx.setNavbarRef(navbar);
@@ -110,6 +111,15 @@ export default function Navbar(props: NavbarProps) {
 			<div class="flex flex-row ml-auto gap-2">
 				<button
 					title="yes"
+					class="rounded opacity-80 hover:opacity-100 md:px-1 bg-transparent border-none active:animate-tada animate-duration-75"
+					onClick={() => {
+						navigate("/create");
+					}}
+				>
+					<BsPlus size={40} />
+				</button>
+				<button
+					title="Toggle dark mode"
 					class="rounded opacity-80 hover:opacity-100 md:px-1 bg-transparent border-none active:animate-tada animate-duration-75"
 					onClick={() =>
 						themeCtx.setTheme((prev) => (prev === "light" ? "dark" : "light"))

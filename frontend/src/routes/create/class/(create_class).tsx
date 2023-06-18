@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { Toaster, toast } from "solid-toast";
 import { useUserContext } from "~/context/UserProvider";
 import { createClass } from "~/helpers/classes/class";
 
@@ -8,12 +9,16 @@ export default function CreateClass() {
 	return (
 		<>
 			<form
-				onsubmit={(e) => {
+				onsubmit={async (e) => {
 					e.preventDefault();
-					createClass(
+					const res = await createClass(
 						{ name: name() },
 						userCtx.user()?.session_id
 					);
+					if (res?.success) {
+						console.log("Toasting");
+						toast.success("Class created successfully!");
+					}
 				}}
 			>
 				<input

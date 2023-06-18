@@ -1,16 +1,24 @@
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use surrealdb::{opt::RecordId, Surreal};
 #[derive(Serialize, Deserialize)]
 pub struct Test {
     pub name: String,
     pub max_score: u32,
+    pub creation_date: DateTime<Local>,
     pub creator: RecordId,
 }
 impl Test {
-    pub fn create(name: String, max_score: u32, creator_id: String) -> Test {
+    pub fn create(
+        name: String,
+        max_score: u32,
+        creation_date: DateTime<Local>,
+        creator_id: String,
+    ) -> Test {
         Test {
             name,
             max_score,
+            creation_date,
             creator: RecordId {
                 tb: "user".to_owned(),
                 id: creator_id.into(),
@@ -22,6 +30,8 @@ impl Test {
 pub struct TestRecord<T = RecordId> {
     pub name: String,
     pub max_score: u32,
+    pub creation_date: DateTime<Local>,
+    pub creator: RecordId,
     pub id: T,
 }
 pub async fn create_test(

@@ -12,6 +12,7 @@ import {
 	Scripts,
 	Title,
 } from "solid-start";
+import { Toaster } from "solid-toast";
 import "virtual:uno.css";
 import "./main.css";
 import Navbar from "./components/Navbar/Navbar";
@@ -57,6 +58,7 @@ export default function Root() {
 								<div class="h-full w-full dark:bg-dark dark:text-light transition-colors">
 									<UserProvider>
 										<NavbarProvider>
+											<Toaster position="bottom-right" />
 											<div class="h-[50px]">
 												<Navbar
 													options={[
@@ -90,6 +92,7 @@ export default function Root() {
 													</ErrorBoundary>
 												</Suspense>
 											</div>
+											{/* <Toaster position="bottom-right" /> */}
 										</NavbarProvider>
 									</UserProvider>
 								</div>

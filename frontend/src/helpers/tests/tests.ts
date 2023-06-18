@@ -1,5 +1,7 @@
 type Test = {
+	creation_date: Date;
 	name: string;
+	creator: string;
 	max_score: number;
 	id: string;
 };
@@ -8,7 +10,10 @@ type CreateTestResult = {
 	test: Test | null;
 	error: string | null;
 };
-export async function createTest(test: Test, session_id?: string) {
+export async function createTest(
+	test: Omit<Test, "id" | "creation_date" | "creator">,
+	session_id?: string
+) {
 	if (!session_id) return null;
 	const res: CreateTestResult = await (
 		await fetch(`${import.meta.env.VITE_SERVER_URI}/tests/create`, {

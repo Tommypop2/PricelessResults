@@ -6,6 +6,7 @@ use crate::{
     AppState,
 };
 use actix_web::{get, post, web};
+use chrono::Local;
 use serde::{Deserialize, Serialize};
 use test_handler::TestRecord;
 #[derive(Deserialize)]
@@ -89,6 +90,7 @@ async fn create_test(
         &Test::create(
             json.test.name.clone(),
             json.test.max_score,
+            Local::now(),
             user_session.user.user_id,
         ),
     )

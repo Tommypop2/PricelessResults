@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { toast } from "solid-toast";
 import { useUserContext } from "~/context/UserProvider";
 import { createTest } from "~/helpers/tests/tests";
 
@@ -9,14 +10,17 @@ export default function CreateTest() {
 	return (
 		<>
 			<form
-				onsubmit={(e) => {
+				onsubmit={async (e) => {
 					e.preventDefault();
 					const max = maxScore();
 					if (max === undefined) return;
-					createTest(
-						{ name: name(), id: "jkhkjhLHKDSG1", max_score: max },
+					const res = await createTest(
+						{ name: name(), max_score: max },
 						userCtx.user()?.session_id
 					);
+					if (res?.success) {
+						toast.success("Test created successfully!");
+					}
 				}}
 			>
 				<input
