@@ -1,3 +1,5 @@
+use crate::db::handlers::class_handler::ClassMembershipRecord;
+use crate::db::handlers::session_handler::is_session_id_valid;
 use crate::db::shared::json_traits::JsonResult;
 use crate::{
     db::handlers::{
@@ -113,7 +115,7 @@ impl JsonResult<Vec<ClassRecord>> for ClassesResult {
 struct ReadClassesParams {
     session_id: String,
 }
-#[get("get")]
+#[get("get_created")]
 async fn read_classes(
     state: web::Data<AppState>,
     query: web::Query<ReadClassesParams>,
@@ -137,9 +139,87 @@ async fn read_classes(
         .unwrap();
     Ok(web::Json(ClassesResult::success(classes)))
 }
+#[derive(Serialize)]
+struct ClassMembershipResult {
+    success: bool,
+    error: Option<String>,
+    memberships: Option<Vec<ClassMembershipRecord>>,
+}
+#[get("get_joined")]
+async fn read_joined(
+    state: web::Data<AppState>,
+    query: web::Query<ReadClassesParams>,
+) -> actix_web::Result<impl actix_web::Responder> {
+    let session_id = &query.session_id;
+    let user_session = session_handler::get_session(session_id, &state.surreal.db).await;
+    let session = match user_session {
+        Some(session) => session,
+        None => {
+            return Ok(web::Json(ClassMembershipResult {
+                success: false,
+                error: Some("No session with this id".to_string()),
+                memberships: None,
+            }))
+        }
+    };
+    let classes: Vec<ClassMembershipRecord> =
+        class_handler::read_memberships(&state.surreal.db, &session.user.user_id)
+            .await
+            // Let's just hope the function won't fail for now
+            .unwrap();
+    Ok(web::Json(ClassMembershipResult {
+        success: true,
+        error: None,
+        memberships: Some(classes),
+    }))
+}
+#[derive(Deserialize)]
+struct JoinClassParams {
+    session_id: String,
+    class_id: String,
+}
+#[derive(Serialize)]
+struct JoinClassResult {
+    success: bool,
+    error: Option<String>,
+}
+#[post("join")]
+async fn join_class(
+    state: web::Data<AppState>,
+    json: web::Json<JoinClassParams>,
+) -> actix_web::Result<impl actix_web::Responder> {
+    let session_id = &json.session_id;
+    let session_result = session_handler::get_session(session_id, &state.surreal.db).await;
+    let session = match session_result {
+        Some(session) => session,
+        None => {
+            return Ok(web::Json(JoinClassResult {
+                success: false,
+                error: Some("No session with this id".to_string()),
+            }))
+        }
+    };
+    match class_handler::add_member(&state.surreal.db, &json.class_id, &session.user.user_id).await
+    {
+        Ok(_) => {
+            return Ok(web::Json(JoinClassResult {
+                success: true,
+                error: None,
+            }))
+        }
+        Err(_) => {
+            return Ok(web::Json(JoinClassResult {
+                success: false,
+                error: Some("Failed to join class".to_string()),
+            }))
+        }
+    };
+}
 pub fn class_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(index)
         .service(create_class)
         .service(read_class)
-        .service(read_classes);
+        .service(read_classes)
+        .service(join_class)
+        .service(read_joined);
 }

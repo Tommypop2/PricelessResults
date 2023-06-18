@@ -9,7 +9,10 @@ import {
 	ChartOptions,
 } from "chart.js";
 import { Line } from "solid-chartjs";
+import ClassesView from "~/components/classes/UserClasses";
+import { useUserContext } from "~/context/UserProvider";
 export default function Dashboard() {
+	const userCtx = useUserContext();
 	onMount(() => {
 		Chart.register(Title, Tooltip, Legend, Colors);
 	});
@@ -44,8 +47,11 @@ export default function Dashboard() {
 	};
 
 	return (
-		<div class="w-80 h-80 hover:scale-105 transition-all ease-in-out">
-			<Line data={chartData} options={chartOptions} />
-		</div>
+		<>
+			<ClassesView session_id={userCtx.user()?.session_id} />
+			<div class="w-80 h-80 hover:scale-105 transition-all ease-in-out">
+				<Line data={chartData} options={chartOptions} />
+			</div>
+		</>
 	);
 }

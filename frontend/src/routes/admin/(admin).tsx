@@ -1,6 +1,6 @@
 import { Show, Suspense, createResource } from "solid-js";
 import { useNavigate } from "solid-start";
-import ClassesView, { Class } from "~/components/classes/ClassesView";
+import ClassesView, { Class } from "~/components/classes/UserClasses";
 import TestsView, { Test } from "~/components/tests/TestsView";
 import { useUserContext } from "~/context/UserProvider";
 
@@ -25,7 +25,7 @@ export default function Admin() {
 		<div class="grid grid-cols-3">
 			<Show when={userCtx.user()?.session_id}>
 				<TestsView tests={tests()} />
-				<ClassesView classes={classes()} />
+				{/* <ClassesView classes={classes()} /> */}
 			</Show>
 		</div>
 	);
