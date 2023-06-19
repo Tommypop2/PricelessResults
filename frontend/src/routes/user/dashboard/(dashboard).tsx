@@ -11,6 +11,7 @@ import {
 import { Line } from "solid-chartjs";
 import ClassesView from "~/components/classes/UserClasses";
 import { useUserContext } from "~/context/UserProvider";
+import TestsView from "~/components/tests/UserTests";
 export default function Dashboard() {
 	const userCtx = useUserContext();
 	onMount(() => {
@@ -45,13 +46,17 @@ export default function Dashboard() {
 		responsive: true,
 		maintainAspectRatio: false,
 	};
-
+	const session_id = () => userCtx.user()?.session_id;
 	return (
-		<>
-			<ClassesView session_id={userCtx.user()?.session_id} />
-			<div class="w-80 h-80 hover:scale-105 transition-all ease-in-out">
+		<div class="grid grid-cols-4 p-2 gap-2">
+			<ClassesView session_id={session_id()} />
+			
+			<TestsView session_id={session_id()}/>
+			<div class="hover:scale-105 transition-all ease-in-out">
 				<Line data={chartData} options={chartOptions} />
 			</div>
-		</>
+			<div>Slot 4</div>
+			<div>Slot 5</div>
+		</div>
 	);
 }

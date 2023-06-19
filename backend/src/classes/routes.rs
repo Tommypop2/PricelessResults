@@ -163,7 +163,7 @@ async fn read_joined(
         }
     };
     let classes: Vec<ClassMembershipRecord> =
-        class_handler::read_memberships(&state.surreal.db, &session.user.user_id)
+        class_handler::read_class_memberships(&state.surreal.db, &session.user.user_id)
             .await
             // Let's just hope the function won't fail for now
             .unwrap();

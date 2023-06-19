@@ -68,7 +68,7 @@ struct CreateTestParams {
     test: CreateTestTest,
     session_id: String,
 }
-#[post("/create")]
+#[post("create")]
 async fn create_test(
     state: web::Data<AppState>,
     json: web::Json<CreateTestParams>,
@@ -111,7 +111,39 @@ async fn create_test(
         error: None,
     }))
 }
+#[derive(Deserialize)]
+struct AssignTestParams {
+    session_id: String,
+    class_id: Option<String>,
+    user_id: Option<String>,
+}
+#[post("assign")]
+async fn assign_test(
+    state: web::Data<AppState>,
+    json: web::Json<AssignTestParams>,
+) -> actix_web::Result<impl actix_web::Responder> {
+    // Handle when class id is present
+    if let Some(class_id) = &json.class_id {}
+    // Handle when assigning to a specific user
+    if let Some(user_id) = &json.user_id {}
 
+    // Neither class_id, or user_id was provided
+    Ok(web::Json("Hello World"))
+}
+#[get("get_joined")]
+async fn get_joined_tests(
+    state: web::Data<AppState>,
+    query: web::Query<GetTestsParams>,
+) -> actix_web::Result<impl actix_web::Responder> {
+    let user_session = session_handler::get_session(&query.session_id, &state.surreal.db).await;
+    let session = match user_session {
+        Some(session) => session,
+        None => return Ok(web::Json("Hello World")),
+    };
+    Ok(web::Json("Hello World"))
+}
 pub fn test_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(index).service(create_test);
+    cfg.service(index)
+        .service(create_test)
+        .service(get_joined_tests);
 }

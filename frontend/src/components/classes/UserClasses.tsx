@@ -22,7 +22,8 @@ export default function ClassesView(props: ClasesViewProps) {
 		}
 	);
 	return (
-		<div class="flex flex-col">
+		<div class="flex flex-col border border-white border-solid rounded-xl">
+			<h2>My Classes</h2>
 			<For each={classes()?.memberships}>
 				{(item, i) => {
 					return <div>{item.class.name}</div>;
