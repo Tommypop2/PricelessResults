@@ -122,7 +122,7 @@ export default function Navbar(props: NavbarProps) {
 					title="Toggle dark mode"
 					class="rounded opacity-80 hover:opacity-100 md:px-1 bg-transparent border-none active:animate-tada animate-duration-75"
 					onClick={() =>
-						themeCtx.setTheme((prev) => (prev === "light" ? "dark" : "light"))
+						themeCtx.setTheme(themeCtx.theme() === "light" ? "dark" : "light")
 					}
 				>
 					<Show

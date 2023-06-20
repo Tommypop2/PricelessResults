@@ -6,6 +6,7 @@ import {
 	createEffect,
 	createSignal,
 	on,
+	onMount,
 	useContext,
 } from "solid-js";
 import { isServer } from "solid-js/web";
@@ -14,7 +15,7 @@ import { useRequest } from "solid-start/server";
 type Theme = "light" | "dark";
 const ThemeContext = createContext<{
 	theme: Accessor<Theme>;
-	setTheme: Setter<Theme>;
+	setTheme: (value: Theme) => Theme;
 }>();
 
 export const ThemeProvider: ParentComponent = (props) => {
@@ -24,20 +25,25 @@ export const ThemeProvider: ParentComponent = (props) => {
 		isServer ? event.request.headers.get("cookie") ?? "" : document.cookie
 	)["theme"] as Theme;
 	const [theme, setTheme] = createSignal<Theme>(userTheme ?? "dark");
+	let channel: BroadcastChannel;
+	onMount(() => {
+		channel = new BroadcastChannel("theme_channel");
+		channel.onmessage = (e) => {
+			const newTheme = e.data as Theme;
+			setTheme(newTheme);
+		};
+	});
+	const updateTheme = (newTheme: Theme) => {
+		setTheme(newTheme);
+		const maxAge = 365 * 24 * 60 * 60;
+		document.cookie = `theme=${newTheme};max-age=${maxAge};`;
+		channel.postMessage(newTheme);
+		return newTheme;
+	};
 	const value = {
 		theme,
-		setTheme,
+		setTheme: updateTheme,
 	};
-	createEffect(
-		on(
-			theme,
-			(newTheme) => {
-				const maxAge = 365 * 24 * 60 * 60;
-				document.cookie = `theme=${newTheme};max-age=${maxAge};`;
-			},
-			{ defer: true }
-		)
-	);
 	return (
 		<ThemeContext.Provider value={value}>
 			{props.children}
