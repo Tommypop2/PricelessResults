@@ -1,9 +1,8 @@
 import { For, createResource } from "solid-js";
-export type Class = { name: string };
-type ClassMembership = { class: Class, members: number };
+type ClassRecord = { name: string; members: number };
 type GetMembershipResult = {
 	success: boolean;
-	memberships: ClassMembership[];
+	classes: ClassRecord[];
 	error?: string;
 };
 type ClasesViewProps = {
@@ -13,7 +12,7 @@ export default function ClassesView(props: ClasesViewProps) {
 	const [classes] = createResource(
 		() => props.session_id,
 		async (id) => {
-			if (!id) return { success: false, memberships: [] };
+			if (!id) return { success: false, classes: [] };
 			const res = await fetch(
 				`${import.meta.env.VITE_SERVER_URI}/class/get_created?session_id=${id}`
 			);
@@ -36,11 +35,11 @@ export default function ClassesView(props: ClasesViewProps) {
 					</tr>
 				</thead>
 				<tbody></tbody>
-				<For each={classes()?.memberships}>
+				<For each={classes()?.classes}>
 					{(item, i) => {
 						return (
 							<tr>
-								<td>{item.class.name}</td>
+								<td>{item.name}</td>
 								<td>{item.members}</td>
 							</tr>
 						);
