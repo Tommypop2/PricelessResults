@@ -1,4 +1,4 @@
-import { For, createResource } from "solid-js";
+import { For, createResource, createSignal } from "solid-js";
 type ClassRecord = { name: string; members: number };
 type GetMembershipResult = {
 	success: boolean;
@@ -9,7 +9,7 @@ type ClasesViewProps = {
 	session_id?: string;
 };
 export default function ClassesView(props: ClasesViewProps) {
-	const [classes] = createResource(
+	const [classes, {mutate}] = createResource(
 		() => props.session_id,
 		async (id) => {
 			if (!id) return { success: false, classes: [] };
@@ -21,8 +21,9 @@ export default function ClassesView(props: ClasesViewProps) {
 			return resJson;
 		}
 	);
+	const [newName, setNewName] = createSignal<HTMLInputElement>();
 	return (
-		<div class="flex flex-col rounded-xl">
+		<div class="flex flex-col rounded-xl h-full">
 			<table>
 				<thead>
 					<tr>
@@ -34,18 +35,33 @@ export default function ClassesView(props: ClasesViewProps) {
 						</th>
 					</tr>
 				</thead>
-				<tbody></tbody>
-				<For each={classes()?.classes}>
-					{(item, i) => {
-						return (
-							<tr>
-								<td>{item.name}</td>
-								<td>{item.members}</td>
-							</tr>
-						);
-					}}
-				</For>
+				<tbody>
+					<For each={classes()?.classes}>
+						{(item, i) => {
+							return (
+								<tr>
+									<td>{item.name}</td>
+									<td>{item.members}</td>
+								</tr>
+							);
+						}}
+					</For>
+				</tbody>
 			</table>
+			<form
+				onsubmit={(e) => {
+					e.preventDefault();
+					const el = newName();
+					if(!el) return;
+					const name = el.value;
+					let copy = classes();
+					if(!copy) return;
+					copy?.classes.push({name, members: 0});
+					mutate({...copy});
+				}}
+			>
+				<input placeholder="Name" ref={setNewName} autocomplete="off"/>
+			</form>
 		</div>
 	);
 }

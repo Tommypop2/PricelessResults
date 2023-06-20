@@ -113,7 +113,7 @@ export default function Navbar(props: NavbarProps) {
 					title="yes"
 					class="rounded opacity-80 hover:opacity-100 md:px-1 bg-transparent border-none active:animate-tada animate-duration-75"
 					onClick={() => {
-						navigate("/create");
+						navigate("/creator");
 					}}
 				>
 					<BsPlus size={40} />
