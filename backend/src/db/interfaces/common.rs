@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
+use crate::Record;
+
 pub fn generate_id(user_id: &String, group_id: &String) -> String {
     user_id.clone() + "-" + group_id
 }
@@ -31,7 +33,8 @@ pub async fn add_membership<T>(
 where
     T: Serialize + Membership,
 {
-    db.create((membership.table, membership.id))
+    let _: Record = db
+        .create((membership.table, membership.id))
         .content(membership.membership)
         .await?;
     Ok(())

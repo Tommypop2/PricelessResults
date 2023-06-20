@@ -1,12 +1,10 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
+use surrealdb::{engine::remote::ws::Client, method::Update, opt::RecordId, Surreal};
 
 use crate::Record;
 
-use super::{
-    common::{add_membership, generate_id, Membership, MembershipType},
-};
+use super::common::{add_membership, generate_id, Membership, MembershipType};
 
 // Classes will probably just be an alias for applying tests to many users at once, and for class averages. Other than that, they shouldn't actually need to have much functionality
 #[derive(Serialize, Deserialize, Debug)]
@@ -14,6 +12,7 @@ pub struct Class {
     pub name: String,
     pub creation_date: DateTime<Local>,
     pub creator: RecordId,
+    pub members: u32,
 }
 impl Class {
     pub fn create(name: String, creation_date: DateTime<Local>, creator_id: String) -> Class {
@@ -24,33 +23,89 @@ impl Class {
                 tb: "user".to_owned(),
                 id: creator_id.into(),
             },
+            members: 0,
         }
     }
+}
+// This is used to update the members_count field on the `Class` struct
+#[derive(Serialize, Deserialize, Debug)]
+struct MembersCount {
+    pub members: u32,
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClassRecord<T = RecordId> {
     pub name: String,
-    pub id: T,
+    pub id: RecordId,
     pub creation_date: DateTime<Local>,
-    pub creator: RecordId,
+    pub creator: T,
+    pub members: u32,
 }
 // Classes Themselves
 pub async fn create_class(db: &Surreal<Client>, class: &Class) -> surrealdb::Result<ClassRecord> {
     let new_class: ClassRecord = db.create("class").content(class).await?;
     Ok(new_class)
 }
-pub async fn read_class(db: &Surreal<Client>, id: String) -> surrealdb::Result<ClassRecord> {
-    let class: ClassRecord = db.select(("class", id)).await?;
+pub enum ClassIdentifier {
+    Id(String),
+    CreatorId(String),
+}
+pub async fn read_class(
+    db: &Surreal<Client>,
+    id: ClassIdentifier,
+) -> surrealdb::Result<Option<ClassRecord>> {
+    let class: Option<ClassRecord> = match id {
+        ClassIdentifier::Id(id) => db.select(("class", id)).await?,
+        ClassIdentifier::CreatorId(id) => db
+            .query("SELECT *, creator.* FROM class WHERE creator.user_id = $creator_id")
+            .bind(("creator_id", id))
+            .await?
+            .take(0)?,
+    };
     Ok(class)
 }
-pub async fn update_class(
+/**
+ * Has the potential to return multiple classes
+ */
+pub async fn read_classes(
     db: &Surreal<Client>,
-    class: ClassRecord,
+    id: ClassIdentifier,
+) -> surrealdb::Result<Vec<ClassRecord>> {
+    let classes: Vec<ClassRecord> = match id {
+        ClassIdentifier::Id(id) => db.select(("class", id)).await?,
+        ClassIdentifier::CreatorId(id) => db
+            .query("SELECT *, creator.* FROM class WHERE creator.user_id = $creator_id")
+            .bind(("creator_id", id))
+            .await?
+            .take(0)?,
+    };
+    Ok(classes)
+}
+pub async fn read_classes_fuzzy_name(
+    db: &Surreal<Client>,
+    name: &str,
+    creator_id: &str,
+) -> surrealdb::Result<Vec<ClassRecord>> {
+    let classes: Vec<ClassRecord> = db
+        // Should only be able to search through classes that the user has created
+        .query("SELECT * FROM class WHERE name ~ $name AND creator = $creator")
+        .bind(("name", name))
+        .bind((
+            "creator",
+            RecordId {
+                tb: "user".to_owned(),
+                id: creator_id.into(),
+            },
+        ))
+        .await?
+        .take(0)?;
+    Ok(classes)
+}
+pub async fn update_class<T: Serialize>(
+    db: &Surreal<Client>,
+    update: T,
+    class_id: &str,
 ) -> surrealdb::Result<ClassRecord> {
-    let updated: ClassRecord = db
-        .update(("class", &class.id.id.to_string()))
-        .content(class)
-        .await?;
+    let updated: ClassRecord = db.update(("class", class_id)).merge(update).await?;
     Ok(updated)
 }
 pub async fn delete_class(db: &Surreal<Client>, id: String) -> surrealdb::Result<()> {
@@ -66,6 +121,7 @@ struct ClassMembership {
 }
 // This is completely over-engineered, it's just so the membership records have different group names, rather than just storing as:
 // {user: RecordId, group: RecordId}
+// But the records can be created as if they were
 impl Membership for ClassMembership {
     fn create_membership(user: RecordId, group: RecordId) -> MembershipType<Self>
     where
@@ -90,12 +146,9 @@ pub async fn add_member(
 ) -> surrealdb::Result<()> {
     let generated_id = generate_id(user_id, class_id);
     // Check if class exists
-    read_class(db, class_id.to_string()).await?;
+    read_class(db, ClassIdentifier::Id(class_id.to_string())).await?;
     // Check if they're already a member
-    let result: Option<Record> = db
-        .select(("class_membership", &generated_id))
-        .await
-        .unwrap();
+    let result: Option<Record> = db.select(("class_membership", &generated_id)).await?;
     match result {
         Some(_) => return Ok(()),
         None => {}
@@ -112,6 +165,8 @@ pub async fn add_member(
         },
     );
     add_membership(db, membership).await?;
+    let count = count_members(db, class_id).await?;
+    update_class(db, MembersCount { members: count }, class_id).await?;
     Ok(())
 }
 #[derive(Serialize, Deserialize, Debug)]
@@ -119,21 +174,13 @@ pub struct ClassMembershipRecord {
     id: RecordId,
     class: Class,
     user: RecordId,
-    // May be better to actually store this in the database with the class, as that'd speed the below process up
-    members: Option<i32>,
 }
 pub async fn read_class_memberships(
     db: &Surreal<Client>,
     user_id: &String,
-    include_count: bool,
 ) -> surrealdb::Result<Vec<ClassMembershipRecord>> {
-    let mut query: &str = "SELECT *, class.* FROM class_membership WHERE user = $user";
-    if include_count {
-        // This takes about 120-160 microseconds to run. Probably better to use 2 separate queries
-        query = "SELECT *, class.*, (SELECT count(class=class.id), class FROM class_membership GROUP BY class)[0].count as members FROM class_membership WHERE user = $user";
-    }
     let memberships: Vec<ClassMembershipRecord> = db
-        .query(query)
+        .query("SELECT *, class.* FROM class_membership WHERE user = $user")
         .bind((
             "user",
             RecordId {
@@ -146,4 +193,25 @@ pub async fn read_class_memberships(
         .take(0)
         .unwrap();
     Ok(memberships)
+}
+#[derive(Debug, Deserialize)]
+struct CountRecord {
+    count: u32,
+}
+pub async fn count_members(db: &Surreal<Client>, class_id: &str) -> surrealdb::Result<u32> {
+    let count: Option<CountRecord> = db
+        .query("SELECT count FROM SELECT count(class=$class), class FROM class_membership GROUP BY class")
+        .bind((
+            "class",
+            RecordId {
+                tb: "class".to_owned(),
+                id: class_id.into(),
+            },
+        ))
+        .await?
+        .take(0)?;
+    if let Some(count) = count {
+        return Ok(count.count);
+    }
+    return Ok(0);
 }

@@ -9,9 +9,9 @@ import {
 	ChartOptions,
 } from "chart.js";
 import { Line } from "solid-chartjs";
-import ClassesView from "~/components/classes/UserClasses";
+import ClassesView from "~/components/User/classes/UserClasses";
 import { useUserContext } from "~/context/UserProvider";
-import TestsView from "~/components/tests/UserTests";
+import TestsView from "~/components/User/tests/UserTests";
 import Container from "~/components/Container/Container";
 export default function Dashboard() {
 	const userCtx = useUserContext();

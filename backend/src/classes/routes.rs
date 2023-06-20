@@ -1,4 +1,5 @@
-use crate::db::handlers::class_handler::ClassMembershipRecord;
+use crate::db::handlers::class_handler::{ClassIdentifier, ClassMembershipRecord};
+use crate::db::interfaces::user_interface::User;
 use crate::db::shared::json_traits::JsonResult;
 use crate::{
     db::handlers::{
@@ -81,21 +82,24 @@ async fn read_class(
         Some(session) => session,
         None => return Ok(ClassResult::failure_json("No session with this id")),
     };
-    // Should only be able to read by id, as names are not necessarily unique
-    let class = match class_handler::read_class(&state.surreal.db, query.id.clone()).await {
-        Ok(class) => class,
-        Err(_) => return Ok(ClassResult::failure_json("Failed to read class")),
-    };
+    let class =
+        match class_handler::read_class(&state.surreal.db, ClassIdentifier::Id(query.id.clone()))
+            .await
+        {
+            Ok(Some(class)) => class,
+            Ok(None) => return Ok(ClassResult::failure_json("No class with this id")),
+            Err(_) => return Ok(ClassResult::failure_json("Failed to read class")),
+        };
     Ok(ClassResult::success_json(class))
 }
 #[derive(Serialize)]
 struct ClassesResult {
     success: bool,
     error: Option<String>,
-    classes: Option<Vec<ClassRecord>>,
+    classes: Option<Vec<ClassRecord<User>>>,
 }
-impl JsonResult<Vec<ClassRecord>> for ClassesResult {
-    fn success(data: Vec<ClassRecord>) -> ClassesResult {
+impl JsonResult<Vec<ClassRecord<User>>> for ClassesResult {
+    fn success(data: Vec<ClassRecord<User>>) -> ClassesResult {
         Self {
             success: true,
             error: None,
@@ -125,11 +129,11 @@ async fn read_classes(
         Some(session) => session,
         None => return Ok(ClassesResult::failure_json("No session with this id")),
     };
-    let classes: Vec<ClassRecord> = state
+    let classes: Vec<ClassRecord<User>> = state
         .surreal
         .db
         .query(format!(
-            "SELECT * FROM classes WHERE class.creator.user_id = {}",
+            "SELECT *, creator.* FROM class WHERE creator.user_id = {}",
             session.user.user_id
         ))
         .await
@@ -162,7 +166,7 @@ async fn read_joined(
         }
     };
     let classes: Vec<ClassMembershipRecord> =
-        class_handler::read_class_memberships(&state.surreal.db, &session.user.user_id, true)
+        class_handler::read_class_memberships(&state.surreal.db, &session.user.user_id)
             .await
             // Let's just hope the function won't fail for now
             .unwrap();

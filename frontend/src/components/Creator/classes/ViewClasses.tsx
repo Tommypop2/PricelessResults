@@ -15,7 +15,7 @@ export default function ClassesView(props: ClasesViewProps) {
 		async (id) => {
 			if (!id) return { success: false, memberships: [] };
 			const res = await fetch(
-				`${import.meta.env.VITE_SERVER_URI}/class/get_joined?session_id=${id}`
+				`${import.meta.env.VITE_SERVER_URI}/class/get_created?session_id=${id}`
 			);
 			const resJson = (await res.json()) as GetMembershipResult;
 			console.log(resJson);
