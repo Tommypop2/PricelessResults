@@ -12,6 +12,7 @@ import { Line } from "solid-chartjs";
 import ClassesView from "~/components/classes/UserClasses";
 import { useUserContext } from "~/context/UserProvider";
 import TestsView from "~/components/tests/UserTests";
+import Container from "~/components/Container/Container";
 export default function Dashboard() {
 	const userCtx = useUserContext();
 	onMount(() => {
@@ -26,6 +27,13 @@ export default function Dashboard() {
 				data: [80, 75, 90, 50, 72],
 				pointBackgroundColor: "yellow",
 				borderColor: "red",
+				tension: 0.2,
+			},
+			{
+				label: "Class Averages",
+				data: [69, 90, 70, 65, 84],
+				pointBackgroundColor: "yellow",
+				borderColor: "green",
 				tension: 0.2,
 			},
 		],
@@ -49,12 +57,15 @@ export default function Dashboard() {
 	const session_id = () => userCtx.user()?.session_id;
 	return (
 		<div class="grid grid-cols-4 p-2 gap-2">
-			<ClassesView session_id={session_id()} />
-			
-			<TestsView session_id={session_id()}/>
-			<div class="hover:scale-105 transition-all ease-in-out">
+			<div class="transition-all ease-in-out col-span-2">
 				<Line data={chartData} options={chartOptions} />
 			</div>
+			<Container>
+				<ClassesView session_id={session_id()} />
+			</Container>
+			<Container>
+				<TestsView session_id={session_id()} />
+			</Container>
 			<div>Slot 4</div>
 			<div>Slot 5</div>
 		</div>

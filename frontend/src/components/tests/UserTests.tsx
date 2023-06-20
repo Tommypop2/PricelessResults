@@ -15,14 +15,14 @@ export default function TestsView(props: ClasesViewProps) {
 		async (id) => {
 			if (!id) return { success: false, memberships: [] };
 			const res = await fetch(
-				`${import.meta.env.VITE_SERVER_URI}/tests/get_joined?session_id=${id}`
+				`${import.meta.env.VITE_SERVER_URI}/tests/get_assigned?session_id=${id}`
 			);
 			const resJson = (await res.json()) as TestMembershipResult;
 			return resJson;
 		}
 	);
 	return (
-		<div class="flex flex-col border border-white border-solid rounded-xl">
+		<div class="flex flex-col rounded-xl">
 			<h2>My Tests</h2>
 			<For each={tests()?.memberships}>
 				{(item, i) => {

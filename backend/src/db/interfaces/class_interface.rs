@@ -6,7 +6,6 @@ use crate::Record;
 
 use super::{
     common::{add_membership, generate_id, Membership, MembershipType},
-    user_interface::User,
 };
 
 // Classes will probably just be an alias for applying tests to many users at once, and for class averages. Other than that, they shouldn't actually need to have much functionality
@@ -120,13 +119,21 @@ pub struct ClassMembershipRecord {
     id: RecordId,
     class: Class,
     user: RecordId,
+    // May be better to actually store this in the database with the class, as that'd speed the below process up
+    members: Option<i32>,
 }
 pub async fn read_class_memberships(
     db: &Surreal<Client>,
     user_id: &String,
+    include_count: bool,
 ) -> surrealdb::Result<Vec<ClassMembershipRecord>> {
+    let mut query: &str = "SELECT *, class.* FROM class_membership WHERE user = $user";
+    if include_count {
+        // This takes about 120-160 microseconds to run. Probably better to use 2 separate queries
+        query = "SELECT *, class.*, (SELECT count(class=class.id), class FROM class_membership GROUP BY class)[0].count as members FROM class_membership WHERE user = $user";
+    }
     let memberships: Vec<ClassMembershipRecord> = db
-        .query("SELECT *, class.* FROM class_membership WHERE user = $user")
+        .query(query)
         .bind((
             "user",
             RecordId {

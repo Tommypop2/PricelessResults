@@ -1,10 +1,13 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use surrealdb::{opt::RecordId, Surreal, engine::remote::ws::Client};
+use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
 use crate::Record;
 
-use super::common::{generate_id, Membership, MembershipType, add_membership};
+use super::{
+    common::{add_membership, generate_id, Membership, MembershipType},
+    user_interface::User,
+};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Test {
     pub name: String,
@@ -30,13 +33,13 @@ impl Test {
         }
     }
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TestRecord<T = RecordId> {
     pub name: String,
     pub max_score: u32,
     pub creation_date: DateTime<Local>,
-    pub creator: RecordId,
-    pub id: T,
+    pub creator: T,
+    pub id: RecordId,
 }
 pub async fn create_test(
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
@@ -47,9 +50,22 @@ pub async fn create_test(
 }
 pub async fn read_test(
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
-    id: String,
-) -> surrealdb::Result<TestRecord> {
-    let test: TestRecord = db.select(("test", id)).await?;
+    id: &str,
+) -> surrealdb::Result<Option<TestRecord<User>>> {
+    // let test: TestRecord<User> = db.select(("test", id)).await.unwrap();
+    dbg!(&id);
+    let test: Option<TestRecord<User>> = db
+        .query("SELECT *, creator.* FROM $test")
+        .bind((
+            "test",
+            RecordId {
+                tb: "test".to_owned(),
+                id: id.into(),
+            },
+        ))
+        .await?
+        .take(0)?;
+    dbg!(&test);
     Ok(test)
 }
 pub async fn update_test(
@@ -70,7 +86,6 @@ pub async fn delete_test(
     db.delete(("test", id)).await?;
     Ok(())
 }
-
 
 #[derive(Serialize, Deserialize)]
 struct TestMembership {
@@ -96,12 +111,12 @@ impl Membership for TestMembership {
 
 pub async fn add_test_member(
     db: &Surreal<Client>,
-    class_id: &String,
+    test_id: &String,
     user_id: &String,
 ) -> surrealdb::Result<()> {
-    let generated_id = generate_id(user_id, class_id);
-    // Check if class exists
-    read_test(db, class_id.to_string()).await?;
+    let generated_id = generate_id(user_id, test_id);
+    // Check if test exists
+    read_test(db, test_id).await?;
     // Check if they're already a member
     let result: Option<Record> = db
         .select(("class_membership", &generated_id))
@@ -119,7 +134,7 @@ pub async fn add_test_member(
         },
         RecordId {
             tb: "class".to_owned(),
-            id: class_id.into(),
+            id: test_id.into(),
         },
     );
     add_membership(db, membership).await?;
@@ -132,12 +147,12 @@ pub struct TestMembershipRecord {
     test: Test,
     user: RecordId,
 }
-pub async fn read_class_memberships(
+pub async fn read_test_memberships(
     db: &Surreal<Client>,
-    user_id: &String,
+    user_id: &str,
 ) -> surrealdb::Result<Vec<TestMembershipRecord>> {
     let memberships: Vec<TestMembershipRecord> = db
-        .query("SELECT *, class.* FROM test_membership WHERE user = $user")
+        .query("SELECT *, test.* FROM test_membership WHERE user = $user")
         .bind((
             "user",
             RecordId {
@@ -150,4 +165,19 @@ pub async fn read_class_memberships(
         .take(0)
         .unwrap();
     Ok(memberships)
+}
+
+pub async fn add_test_to_class(
+    db: &Surreal<Client>,
+    class_id: &str,
+    test_id: &str,
+) -> surrealdb::Result<()> {
+    db.query("INSERT INTO test_membership SELECT user.id AS user, $test AS test FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)").bind(("test", RecordId{
+        tb: "test".to_owned(),
+        id: test_id.into()
+    })).bind(("class", RecordId{
+        tb: "class".to_owned(),
+        id: class_id.into(),
+    })).await?;
+    Ok(())
 }

@@ -1,5 +1,4 @@
 use crate::db::handlers::class_handler::ClassMembershipRecord;
-use crate::db::handlers::session_handler::is_session_id_valid;
 use crate::db::shared::json_traits::JsonResult;
 use crate::{
     db::handlers::{
@@ -163,7 +162,7 @@ async fn read_joined(
         }
     };
     let classes: Vec<ClassMembershipRecord> =
-        class_handler::read_class_memberships(&state.surreal.db, &session.user.user_id)
+        class_handler::read_class_memberships(&state.surreal.db, &session.user.user_id, true)
             .await
             // Let's just hope the function won't fail for now
             .unwrap();
