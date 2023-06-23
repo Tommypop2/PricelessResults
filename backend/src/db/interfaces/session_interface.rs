@@ -6,17 +6,21 @@ use surrealdb::{opt::RecordId, Surreal};
 use super::user_interface::User;
 
 #[derive(Serialize, Deserialize)]
-pub struct Session {
-    pub user: RecordId,
-    pub user_agent: Option<String>,
-    pub creation_date: DateTime<Local>,
-}
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SessionRecord<T = RecordId> {
-    pub id: RecordId,
+pub struct Session<T = RecordId> {
+    pub id: Option<RecordId>,
     pub user: T,
     pub user_agent: Option<String>,
     pub creation_date: DateTime<Local>,
+}
+impl<T> Session<T> {
+    pub fn new(user: T, user_agent: Option<String>) -> Session<T> {
+        Self {
+            id: None,
+            user,
+            user_agent,
+            creation_date: Local::now(),
+        }
+    }
 }
 const CHARACTERS: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 fn generate_random_string(length: i32) -> String {
@@ -31,8 +35,8 @@ fn generate_random_string(length: i32) -> String {
 pub async fn get_session(
     session_id: &str,
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
-) -> Option<SessionRecord<User>> {
-    let session: Option<SessionRecord<User>> = db
+) -> Option<Session<User>> {
+    let session: Option<Session<User>> = db
         .query(format!("SELECT *, user.* FROM session:{session_id}"))
         .await
         .unwrap()
@@ -44,22 +48,19 @@ pub async fn create_session<'a>(
     db: &'a Surreal<surrealdb::engine::remote::ws::Client>,
     google_id: &'a String,
     user_agent: Option<String>,
-) -> surrealdb::Result<SessionRecord> {
+) -> surrealdb::Result<Session> {
     let session_id = generate_random_string(64);
-    let created: SessionRecord = db
-        .create(("session", &session_id))
-        .content(Session {
-            user: RecordId {
-                id: google_id.into(),
-                tb: "user".to_string(),
-            },
-            user_agent,
-            creation_date: Local::now(),
-        })
-        .await?;
+    let session = Session::new(
+        RecordId {
+            id: google_id.into(),
+            tb: "user".to_string(),
+        },
+        user_agent,
+    );
+    let created: Session = db.create(("session", &session_id)).content(session).await?;
     Ok(created)
 }
 pub async fn delete_session(session_id: &str, db: &Surreal<surrealdb::engine::remote::ws::Client>) {
     // Don't need to validate, db just won't delete anything if session doesn't exist
-    let _: SessionRecord = db.delete(("session", session_id)).await.unwrap();
+    let _: Session = db.delete(("session", session_id)).await.unwrap();
 }

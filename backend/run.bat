@@ -1,2 +1,2 @@
-set OPENSSL_DIR=C:\Program Files\OpenSSL-Win64
+set OPENSSL_DIR=C:\Program Files\Git\usr\bin
 cargo watch -x run

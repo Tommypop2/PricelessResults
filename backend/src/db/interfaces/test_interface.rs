@@ -9,11 +9,12 @@ use super::{
     user_interface::User,
 };
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Test {
+pub struct Test<T = RecordId> {
+    pub id: Option<RecordId>,
     pub name: String,
     pub max_score: u32,
     pub creation_date: DateTime<Local>,
-    pub creator: RecordId,
+    pub creator: T,
 }
 impl Test {
     pub fn create(
@@ -23,6 +24,7 @@ impl Test {
         creator_id: String,
     ) -> Test {
         Test {
+            id: None,
             name,
             max_score,
             creation_date,
@@ -33,28 +35,20 @@ impl Test {
         }
     }
 }
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TestRecord<T = RecordId> {
-    pub name: String,
-    pub max_score: u32,
-    pub creation_date: DateTime<Local>,
-    pub creator: T,
-    pub id: RecordId,
-}
 pub async fn create_test(
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
     test: &Test,
-) -> surrealdb::Result<TestRecord> {
-    let new_test: TestRecord = db.create("test").content(test).await?;
+) -> surrealdb::Result<Test> {
+    let new_test: Test = db.create("test").content(test).await?;
     Ok(new_test)
 }
 pub async fn read_test(
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
     id: &str,
-) -> surrealdb::Result<Option<TestRecord<User>>> {
-    // let test: TestRecord<User> = db.select(("test", id)).await.unwrap();
+) -> surrealdb::Result<Option<Test<User>>> {
+    // let test: Test<User> = db.select(("test", id)).await.unwrap();
     dbg!(&id);
-    let test: Option<TestRecord<User>> = db
+    let test: Option<Test<User>> = db
         .query("SELECT *, creator.* FROM $test")
         .bind((
             "test",
@@ -70,10 +64,13 @@ pub async fn read_test(
 }
 pub async fn update_test(
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
-    test: TestRecord,
-) -> surrealdb::Result<TestRecord> {
-    let updated: TestRecord = db
-        .update(("test", &test.id.id.to_string()))
+    test: Test,
+) -> surrealdb::Result<Test> {
+    if test.id.is_none(){
+        Err(surrealdb::Error::Api(surrealdb::error::Api::InvalidParams("Test doesn't have a present id".into())))?;
+    }
+    let updated: Test = db
+        .update(("test", &test.id.as_ref().unwrap().id.to_string()))
         .content(test)
         .await?;
 

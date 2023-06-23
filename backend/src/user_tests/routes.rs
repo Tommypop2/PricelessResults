@@ -2,7 +2,7 @@ use crate::{
     db::{
         handlers::{
             session_handler::{self},
-            test_handler::{self, Test},
+            test_handler::{self, Test, TestMembershipRecord},
         },
         shared::json_traits::JsonResult,
     },
@@ -11,7 +11,6 @@ use crate::{
 use actix_web::{get, post, web};
 use chrono::Local;
 use serde::{Deserialize, Serialize};
-use test_handler::{TestMembershipRecord, TestRecord};
 #[derive(Deserialize)]
 struct GetTestsParams {
     session_id: String,
@@ -19,11 +18,11 @@ struct GetTestsParams {
 #[derive(Serialize)]
 struct TestsResult {
     success: bool,
-    tests: Option<Vec<TestRecord>>,
+    tests: Option<Vec<Test>>,
     error: Option<String>,
 }
-impl JsonResult<Vec<TestRecord>> for TestsResult {
-    fn success(record: Vec<TestRecord>) -> Self {
+impl JsonResult<Vec<Test>> for TestsResult {
+    fn success(record: Vec<Test>) -> Self {
         Self {
             success: true,
             tests: Some(record),
@@ -55,7 +54,7 @@ async fn index(
         }
     };
     let creator_id = session.user.user_id;
-    let tests: Vec<TestRecord> = state
+    let tests: Vec<Test> = state
         .surreal
         .db
         .query(format!(
@@ -74,10 +73,10 @@ async fn index(
 #[derive(Serialize)]
 struct TestResult {
     success: bool,
-    test: Option<TestRecord>,
+    test: Option<Test>,
     error: Option<String>,
 }
-impl JsonResult<TestRecord> for TestResult {
+impl JsonResult<Test> for TestResult {
     fn failure(message: String) -> Self {
         Self {
             success: false,
@@ -85,7 +84,7 @@ impl JsonResult<TestRecord> for TestResult {
             error: Some(message),
         }
     }
-    fn success(record: TestRecord) -> Self {
+    fn success(record: Test) -> Self {
         Self {
             success: true,
             test: Some(record),

@@ -8,15 +8,21 @@ use super::common::{add_membership, generate_id, Membership, MembershipType};
 
 // Classes will probably just be an alias for applying tests to many users at once, and for class averages. Other than that, they shouldn't actually need to have much functionality
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Class {
+struct MembersCount {
+    pub members: u32,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Class<T = RecordId> {
+    pub id: Option<RecordId>,
     pub name: String,
     pub creation_date: DateTime<Local>,
-    pub creator: RecordId,
+    pub creator: T,
     pub members: u32,
 }
 impl Class {
-    pub fn create(name: String, creation_date: DateTime<Local>, creator_id: String) -> Class {
-        Class {
+    pub fn create(name: String, creation_date: DateTime<Local>, creator_id: String) -> Self {
+        Self {
+            id: None,
             name,
             creation_date,
             creator: RecordId {
@@ -27,22 +33,12 @@ impl Class {
         }
     }
 }
-// This is used to update the members_count field on the `Class` struct
-#[derive(Serialize, Deserialize, Debug)]
-struct MembersCount {
-    pub members: u32,
-}
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ClassRecord<T = RecordId> {
-    pub name: String,
-    pub id: RecordId,
-    pub creation_date: DateTime<Local>,
-    pub creator: T,
-    pub members: u32,
-}
 // Classes Themselves
-pub async fn create_class(db: &Surreal<Client>, class: &Class) -> surrealdb::Result<ClassRecord> {
-    let new_class: ClassRecord = db.create("class").content(class).await?;
+pub async fn create_class(
+    db: &Surreal<Client>,
+    class: &Class,
+) -> surrealdb::Result<Class> {
+    let new_class: Class = db.create("class").content(class).await?;
     Ok(new_class)
 }
 pub enum ClassIdentifier {
@@ -52,8 +48,8 @@ pub enum ClassIdentifier {
 pub async fn read_class(
     db: &Surreal<Client>,
     id: ClassIdentifier,
-) -> surrealdb::Result<Option<ClassRecord>> {
-    let class: Option<ClassRecord> = match id {
+) -> surrealdb::Result<Option<Class>> {
+    let class: Option<Class> = match id {
         ClassIdentifier::Id(id) => db.select(("class", id)).await?,
         ClassIdentifier::CreatorId(id) => db
             .query("SELECT *, creator.* FROM class WHERE creator.user_id = $creator_id")
@@ -69,8 +65,8 @@ pub async fn read_class(
 pub async fn read_classes(
     db: &Surreal<Client>,
     id: ClassIdentifier,
-) -> surrealdb::Result<Vec<ClassRecord>> {
-    let classes: Vec<ClassRecord> = match id {
+) -> surrealdb::Result<Vec<Class>> {
+    let classes: Vec<Class> = match id {
         ClassIdentifier::Id(id) => db.select(("class", id)).await?,
         ClassIdentifier::CreatorId(id) => db
             .query("SELECT *, creator.* FROM class WHERE creator.user_id = $creator_id")
@@ -84,8 +80,8 @@ pub async fn read_classes_fuzzy_name(
     db: &Surreal<Client>,
     name: &str,
     creator_id: &str,
-) -> surrealdb::Result<Vec<ClassRecord>> {
-    let classes: Vec<ClassRecord> = db
+) -> surrealdb::Result<Vec<Class>> {
+    let classes: Vec<Class> = db
         // Should only be able to search through classes that the user has created
         .query("SELECT * FROM class WHERE name ~ $name AND creator = $creator")
         .bind(("name", name))
@@ -104,8 +100,8 @@ pub async fn update_class<T: Serialize>(
     db: &Surreal<Client>,
     update: T,
     class_id: &str,
-) -> surrealdb::Result<ClassRecord> {
-    let updated: ClassRecord = db.update(("class", class_id)).merge(update).await?;
+) -> surrealdb::Result<Class> {
+    let updated: Class = db.update(("class", class_id)).merge(update).await?;
     Ok(updated)
 }
 pub async fn delete_class(db: &Surreal<Client>, id: String) -> surrealdb::Result<()> {

@@ -3,7 +3,7 @@ use crate::db::interfaces::user_interface::User;
 use crate::db::shared::json_traits::JsonResult;
 use crate::{
     db::handlers::{
-        class_handler::{self, Class, ClassRecord},
+        class_handler::{self, Class},
         session_handler,
     },
     AppState,
@@ -28,10 +28,10 @@ struct CreateClassParams {
 struct ClassResult {
     success: bool,
     error: Option<String>,
-    class: Option<ClassRecord>,
+    class: Option<Class>,
 }
-impl JsonResult<ClassRecord> for ClassResult {
-    fn success(data: ClassRecord) -> ClassResult {
+impl JsonResult<Class> for ClassResult {
+    fn success(data: Class) -> ClassResult {
         Self {
             success: true,
             error: None,
@@ -96,10 +96,10 @@ async fn read_class(
 struct ClassesResult {
     success: bool,
     error: Option<String>,
-    classes: Option<Vec<ClassRecord<User>>>,
+    classes: Option<Vec<Class<User>>>,
 }
-impl JsonResult<Vec<ClassRecord<User>>> for ClassesResult {
-    fn success(data: Vec<ClassRecord<User>>) -> ClassesResult {
+impl JsonResult<Vec<Class<User>>> for ClassesResult {
+    fn success(data: Vec<Class<User>>) -> ClassesResult {
         Self {
             success: true,
             error: None,
@@ -129,7 +129,7 @@ async fn read_classes(
         Some(session) => session,
         None => return Ok(ClassesResult::failure_json("No session with this id")),
     };
-    let classes: Vec<ClassRecord<User>> = state
+    let classes: Vec<Class<User>> = state
         .surreal
         .db
         .query(format!(

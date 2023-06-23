@@ -2,9 +2,7 @@ use chrono::{Duration, Local};
 use surrealdb::Surreal;
 
 use crate::db::interfaces::session_interface;
-pub use crate::db::interfaces::session_interface::{
-    create_session, delete_session, Session, SessionRecord,
-};
+pub use crate::db::interfaces::session_interface::{create_session, delete_session, Session};
 // This denotes how long a session will last
 static SESSION_DURATION: i64 = 24 * 60 * 60;
 use super::user_handler::User;
@@ -18,7 +16,7 @@ use super::user_handler::User;
 pub async fn get_session(
     session_id: &str,
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
-) -> Option<SessionRecord<User>> {
+) -> Option<Session<User>> {
     let session = session_interface::get_session(session_id, db).await;
     // The session is invalid if older than the session_duration time
     if session.as_ref().is_some()

@@ -1,7 +1,7 @@
 use actix_web::{get, post, web, HttpRequest, Responder};
 use google_oauth::AsyncClient;
 use serde::{Deserialize, Serialize};
-use session_handler::{Session, SessionRecord};
+use session_handler::{Session};
 use surrealdb::{opt::RecordId, Response};
 // This is terrible structure: will be fixed in the future hopefully
 use crate::{
@@ -30,13 +30,16 @@ fn generate_picture_url(username: &str) -> String {
     let usr_str = username.replace(" ", "+");
     format!("https://ui-avatars.com/api/?name={usr_str}")
 }
-impl JsonResult<SessionRecord<User>> for LoginResult {
-    fn success(data: SessionRecord<User>) -> Self {
-        Self {
-            session_id: Some(data.id.id.to_string()),
-            error: None,
-            user: Some(data.user),
+impl JsonResult<Session<User>> for LoginResult {
+    fn success(data: Session<User>) -> Self {
+        if let Some(id) = data.id {
+            return Self {
+                session_id: Some(id.id.to_string()),
+                error: None,
+                user: Some(data.user),
+            };
         }
+        Self::failure("Things failed".into())
     }
     fn failure(message: String) -> Self {
         Self {
@@ -131,11 +134,15 @@ async fn login_route(
             return Ok(LoginResult::failure_json(&err.to_string()));
         }
     };
-    Ok(web::Json(LoginResult {
-        session_id: Some(session.id.id.to_string()),
-        error: None,
-        user,
-    }))
+    if let Some(id) = session.id {
+        Ok(web::Json(LoginResult {
+            session_id: Some(id.id.to_string()),
+            error: None,
+            user,
+        }))
+    } else {
+        Ok(LoginResult::failure_json("Session id not found"))
+    }
 }
 #[derive(Deserialize)]
 struct LogoutParams {
@@ -193,7 +200,7 @@ async fn user_route(
 }
 #[derive(Serialize)]
 struct UserSessionResult {
-    sessions: Option<Vec<SessionRecord<RecordId>>>,
+    sessions: Option<Vec<Session<RecordId>>>,
 }
 #[get("/sessions")]
 async fn user_sessions(
@@ -205,7 +212,7 @@ async fn user_sessions(
         None => return Ok(web::Json(UserSessionResult { sessions: None })),
     };
     let user_id = session.user.user_id;
-    let sessions: Vec<SessionRecord<RecordId>> = state
+    let sessions: Vec<Session<RecordId>> = state
         .surreal
         .db
         .query(format!(
