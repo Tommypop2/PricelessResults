@@ -237,7 +237,11 @@ async fn get_assigned_tests(
     let user_session = session_handler::get_session(&query.session_id, &state.surreal.db).await;
     let session = match user_session {
         Some(session) => session,
-        None => return Ok(TestMembershipRecordsResult::failure_json("No session with this id".into())),
+        None => {
+            return Ok(TestMembershipRecordsResult::failure_json(
+                "No session with this id".into(),
+            ))
+        }
     };
     let memberships =
         match test_handler::read_test_memberships(&state.surreal.db, &session.user.user_id).await {
