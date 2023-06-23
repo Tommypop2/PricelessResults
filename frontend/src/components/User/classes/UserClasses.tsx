@@ -1,5 +1,5 @@
 import { For, createResource } from "solid-js";
-export type Class = { name: string, members: number };
+export type Class = { name: string; members: number };
 type ClassMembership = { class: Class };
 type GetMembershipResult = {
 	success: boolean;
@@ -18,7 +18,6 @@ export default function ClassesView(props: ClasesViewProps) {
 				`${import.meta.env.VITE_SERVER_URI}/class/get_joined?session_id=${id}`
 			);
 			const resJson = (await res.json()) as GetMembershipResult;
-			console.log(resJson);
 			return resJson;
 		}
 	);

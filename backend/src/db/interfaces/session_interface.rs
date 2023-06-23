@@ -60,7 +60,11 @@ pub async fn create_session<'a>(
     let created: Session = db.create(("session", &session_id)).content(session).await?;
     Ok(created)
 }
-pub async fn delete_session(session_id: &str, db: &Surreal<surrealdb::engine::remote::ws::Client>) {
+pub async fn delete_session(
+    session_id: &str,
+    db: &Surreal<surrealdb::engine::remote::ws::Client>,
+) -> surrealdb::Result<()> {
     // Don't need to validate, db just won't delete anything if session doesn't exist
-    let _: Session = db.delete(("session", session_id)).await.unwrap();
+    let _: Session = db.delete(("session", session_id)).await?;
+    Ok(())
 }

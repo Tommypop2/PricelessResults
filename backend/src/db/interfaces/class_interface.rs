@@ -1,6 +1,6 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use surrealdb::{engine::remote::ws::Client, method::Update, opt::RecordId, Surreal};
+use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
 use crate::Record;
 
@@ -34,20 +34,17 @@ impl Class {
     }
 }
 // Classes Themselves
-pub async fn create_class(
-    db: &Surreal<Client>,
-    class: &Class,
-) -> surrealdb::Result<Class> {
+pub async fn create_class(db: &Surreal<Client>, class: &Class) -> surrealdb::Result<Class> {
     let new_class: Class = db.create("class").content(class).await?;
     Ok(new_class)
 }
-pub enum ClassIdentifier {
-    Id(String),
+pub enum ClassIdentifier<'a> {
+    Id(&'a str),
     CreatorId(String),
 }
 pub async fn read_class(
     db: &Surreal<Client>,
-    id: ClassIdentifier,
+    id: ClassIdentifier<'_>,
 ) -> surrealdb::Result<Option<Class>> {
     let class: Option<Class> = match id {
         ClassIdentifier::Id(id) => db.select(("class", id)).await?,
@@ -64,7 +61,7 @@ pub async fn read_class(
  */
 pub async fn read_classes(
     db: &Surreal<Client>,
-    id: ClassIdentifier,
+    id: ClassIdentifier<'_>,
 ) -> surrealdb::Result<Vec<Class>> {
     let classes: Vec<Class> = match id {
         ClassIdentifier::Id(id) => db.select(("class", id)).await?,
@@ -104,9 +101,11 @@ pub async fn update_class<T: Serialize>(
     let updated: Class = db.update(("class", class_id)).merge(update).await?;
     Ok(updated)
 }
-pub async fn delete_class(db: &Surreal<Client>, id: String) -> surrealdb::Result<()> {
-    db.delete(("class", id)).await?;
-    Ok(())
+pub async fn delete_class(db: &Surreal<Client>, id: &str) -> surrealdb::Result<Class> {
+    // Safer to clear the memberships first
+    clear_memberships(db, id).await?;
+    let res: Class = db.delete(("class", id)).await?;
+    Ok(res)
 }
 
 // Handling memberships. This might be split into another interface at some point
@@ -137,12 +136,17 @@ impl Membership for ClassMembership {
 // Way too many responsibilities. Will be extracted later
 pub async fn add_member(
     db: &Surreal<Client>,
-    class_id: &String,
+    class_id: &str,
     user_id: &String,
 ) -> surrealdb::Result<()> {
     let generated_id = generate_id(user_id, class_id);
     // Check if class exists
-    read_class(db, ClassIdentifier::Id(class_id.to_string())).await?;
+    let class = read_class(db, ClassIdentifier::Id(class_id)).await?;
+    if class.is_none() {
+        return Err(surrealdb::Error::Api(surrealdb::error::Api::InvalidParams(
+            "Class doesn't exist".into(),
+        )))?;
+    }
     // Check if they're already a member
     let result: Option<Record> = db.select(("class_membership", &generated_id)).await?;
     match result {
@@ -184,10 +188,8 @@ pub async fn read_class_memberships(
                 id: user_id.into(),
             },
         ))
-        .await
-        .unwrap()
-        .take(0)
-        .unwrap();
+        .await?
+        .take(0)?;
     Ok(memberships)
 }
 #[derive(Debug, Deserialize)]
@@ -196,7 +198,7 @@ struct CountRecord {
 }
 pub async fn count_members(db: &Surreal<Client>, class_id: &str) -> surrealdb::Result<u32> {
     let count: Option<CountRecord> = db
-        .query("SELECT count FROM SELECT count(class=$class), class FROM class_membership GROUP BY class")
+        .query("SELECT count FROM SELECT count(), class FROM class_membership WHERE class=$class GROUP BY class")
         .bind((
             "class",
             RecordId {
@@ -210,4 +212,17 @@ pub async fn count_members(db: &Surreal<Client>, class_id: &str) -> surrealdb::R
         return Ok(count.count);
     }
     return Ok(0);
+}
+
+pub async fn clear_memberships(db: &Surreal<Client>, class_id: &str) -> surrealdb::Result<()> {
+    db.query("DELETE class_membership WHERE class=$class")
+        .bind((
+            "class",
+            RecordId {
+                tb: "class".to_owned(),
+                id: class_id.into(),
+            },
+        ))
+        .await?;
+    Ok(())
 }

@@ -3,7 +3,7 @@ use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
 use crate::Record;
 
-pub fn generate_id(user_id: &String, group_id: &String) -> String {
+pub fn generate_id(user_id: &String, group_id: &str) -> String {
     user_id.clone() + "-" + group_id
 }
 #[derive(Serialize, Deserialize, Debug)]

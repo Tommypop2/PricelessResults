@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
-use surrealdb::{engine::remote::ws::Client, Response, Surreal};
+use surrealdb::{engine::remote::ws::Client, Response, Surreal, opt::RecordId};
 
 // Structs
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {
+    pub id: Option<RecordId>,
     pub user_id: String,
     pub username: String,
     pub email: String,
@@ -19,6 +20,7 @@ impl User {
         admin: bool,
     ) -> User {
         User {
+            id: None,
             user_id,
             username,
             email,

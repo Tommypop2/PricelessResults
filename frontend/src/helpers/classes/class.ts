@@ -27,3 +27,25 @@ export async function createClass(
 	).json();
 	return res;
 }
+type DeleteClassResult = {
+	success: boolean;
+	error?: string;
+};
+export async function deleteClass(
+	class_id: string,
+	session_id?: string
+) {
+	if (!session_id) return null;
+	const res: DeleteClassResult = await (
+		await fetch(`${import.meta.env.VITE_SERVER_URI}/class/delete`, {
+			credentials: "include",
+			mode: "cors",
+			method: "post",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ class_id, session_id }),
+		})
+	).json();
+	return res;
+}

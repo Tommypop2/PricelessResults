@@ -1,7 +1,7 @@
 use actix_web::{get, post, web, HttpRequest, Responder};
 use google_oauth::AsyncClient;
 use serde::{Deserialize, Serialize};
-use session_handler::{Session};
+use session_handler::Session;
 use surrealdb::{opt::RecordId, Response};
 // This is terrible structure: will be fixed in the future hopefully
 use crate::{
@@ -159,7 +159,14 @@ async fn logout_route(
 ) -> actix_web::Result<impl Responder> {
     let session_id = &query.session_id;
     // Don't need to validate, db just won't delete anything if session doesn't exist
-    session_handler::delete_session(session_id, &shared_data.surreal.db).await;
+    if session_handler::delete_session(session_id, &shared_data.surreal.db)
+        .await
+        .is_err()
+    {
+        return Ok(web::Json(LogoutResult {
+            error: Some("Deleting session failed".into()),
+        }));
+    };
     Ok(web::Json(LogoutResult { error: None }))
 }
 #[derive(Deserialize, Serialize)]

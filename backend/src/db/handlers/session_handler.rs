@@ -24,7 +24,7 @@ pub async fn get_session(
             < Local::now() - Duration::seconds(SESSION_DURATION)
     {
         // Should delete the invalid session
-        delete_session(session_id, db).await;
+        delete_session(session_id, db).await.unwrap_or_default();
         return None;
     }
     return session;

@@ -65,6 +65,45 @@ async fn create_class(
     Ok(ClassResult::success_json(class))
 }
 #[derive(Deserialize)]
+struct DeleteClassParams {
+    session_id: String,
+    class_id: String,
+}
+#[post("delete")]
+async fn delete_class(
+    state: web::Data<AppState>,
+    json: web::Json<DeleteClassParams>,
+) -> actix_web::Result<impl actix_web::Responder> {
+    let session_id = &json.session_id;
+    let user_session = session_handler::get_session(session_id, &state.surreal.db).await;
+    let session = match user_session {
+        Some(session) => session,
+        None => return Ok(ClassResult::failure_json("No session with this id")),
+    };
+    let class_to_delete: Option<Class> =
+        class_handler::read_class(&state.surreal.db, ClassIdentifier::Id(&json.class_id))
+            .await
+            .unwrap_or(None);
+    if class_to_delete.is_none() {
+        return Ok(ClassResult::failure_json("No class with this id"));
+    }
+    // TODO: Remove all of the unwrapping
+    let creator_id = class_to_delete.unwrap().creator.id.to_string();
+    let temp = session.user.id.unwrap().to_string();
+    let user_id = temp.split(":").nth(1).unwrap();
+    if creator_id != user_id {
+        return Ok(ClassResult::failure_json(
+            "You don't have permission to delete this class",
+        ));
+    }
+    // The class can then be deleted, as the user has permission to do so, and the class is valid
+    let deleted = class_handler::delete_class(&state.surreal.db, &json.class_id).await;
+    if let Ok(class) = deleted {
+        return Ok(ClassResult::success_json(class));
+    }
+    Ok(ClassResult::failure_json("Failed to delete class"))
+}
+#[derive(Deserialize)]
 struct ReadClassParams {
     session_id: String,
     id: String,
@@ -83,9 +122,7 @@ async fn read_class(
         None => return Ok(ClassResult::failure_json("No session with this id")),
     };
     let class =
-        match class_handler::read_class(&state.surreal.db, ClassIdentifier::Id(query.id.clone()))
-            .await
-        {
+        match class_handler::read_class(&state.surreal.db, ClassIdentifier::Id(&query.id)).await {
             Ok(Some(class)) => class,
             Ok(None) => return Ok(ClassResult::failure_json("No class with this id")),
             Err(_) => return Ok(ClassResult::failure_json("Failed to read class")),
@@ -221,6 +258,7 @@ async fn join_class(
 pub fn class_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(index)
         .service(create_class)
+        .service(delete_class)
         .service(read_class)
         .service(read_classes)
         .service(join_class)

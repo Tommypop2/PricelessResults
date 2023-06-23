@@ -67,7 +67,7 @@ pub async fn update_test(
     test: Test,
 ) -> surrealdb::Result<Test> {
     if test.id.is_none(){
-        Err(surrealdb::Error::Api(surrealdb::error::Api::InvalidParams("Test doesn't have a present id".into())))?;
+        return Err(surrealdb::Error::Api(surrealdb::error::Api::InvalidParams("Test doesn't have a present id".into())))?;
     }
     let updated: Test = db
         .update(("test", &test.id.as_ref().unwrap().id.to_string()))
