@@ -1,5 +1,3 @@
-use std::future::IntoFuture;
-
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
@@ -7,13 +5,15 @@ use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 #[derive(Serialize, Deserialize)]
 pub struct Score<T = RecordId, U = RecordId> {
     pub id: Option<RecordId>,
+    pub score: Option<u32>,
     pub test: T,
     pub user: U,
     pub creation_date: DateTime<Local>,
 }
 impl Score {
-    fn new(user_id: &str, test_id: &str) -> Score {
+    pub fn new(user_id: &str, test_id: &str, score: u32) -> Score {
         Score {
+            score: Some(score),
             id: None,
             test: RecordId {
                 tb: "test".to_owned(),

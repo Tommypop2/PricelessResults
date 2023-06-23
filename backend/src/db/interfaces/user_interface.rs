@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use surrealdb::{engine::remote::ws::Client, Response, Surreal, opt::RecordId};
+use surrealdb::{engine::remote::ws::Client, opt::RecordId, Response, Surreal};
 
 // Structs
 #[derive(Serialize, Deserialize, Debug)]

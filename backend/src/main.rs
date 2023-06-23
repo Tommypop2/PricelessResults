@@ -5,6 +5,7 @@ use actix_web::{
 };
 mod classes;
 mod db;
+mod score;
 mod user;
 mod user_tests;
 
@@ -16,7 +17,7 @@ use surrealdb::sql::Thing;
 use user::routes::user_routes;
 use user_tests::routes::test_routes;
 
-use crate::classes::routes::class_routes;
+use crate::{classes::routes::class_routes, score::routes::score_routes};
 struct AppState {
     surreal: SurrealDBRepo,
     oauth_clientid: String,
@@ -63,6 +64,7 @@ async fn main() -> std::io::Result<()> {
             .service(web::scope("/user").configure(user_routes))
             .service(web::scope("/tests").configure(test_routes))
             .service(web::scope("/class").configure(class_routes))
+            .service(web::scope("/score").configure(score_routes))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
