@@ -20,7 +20,7 @@ pub struct Class<T = RecordId> {
     pub members: u32,
 }
 impl Class {
-    pub fn create(name: String, creation_date: DateTime<Local>, creator_id: String) -> Self {
+    pub fn new(name: String, creation_date: DateTime<Local>, creator_id: String) -> Self {
         Self {
             id: None,
             name,

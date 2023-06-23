@@ -57,7 +57,7 @@ async fn create_class(
         Some(session) => session,
         None => return Ok(ClassResult::failure_json("No session with this id")),
     };
-    let new_class = Class::create(json.class.name.clone(), Local::now(), session.user.user_id);
+    let new_class = Class::new(json.class.name.clone(), Local::now(), session.user.user_id);
     let class = match class_handler::create_class(&state.surreal.db, &new_class).await {
         Ok(class) => class,
         Err(_) => return Ok(ClassResult::failure_json("Couldn't create class")),

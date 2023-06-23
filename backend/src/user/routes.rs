@@ -106,7 +106,7 @@ async fn login_route(
             None => generate_picture_url(&username),
         };
         // Create user
-        let user = User::create(google_id.clone(), username, email_string, url, false);
+        let user = User::new(google_id.clone(), username, email_string, url, false);
         let usr = user_handler::create_user(&shared_data.surreal.db, &user)
             .await
             .unwrap();

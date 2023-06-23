@@ -11,7 +11,7 @@ pub struct User {
     pub admin: bool,
 }
 impl User {
-    pub fn create(
+    pub fn new(
         user_id: String,
         username: String,
         email: String,

@@ -121,7 +121,7 @@ async fn create_test(
     };
     let created_test = test_handler::create_test(
         &state.surreal.db,
-        &Test::create(
+        &Test::new(
             json.test.name.clone(),
             json.test.max_score,
             Local::now(),

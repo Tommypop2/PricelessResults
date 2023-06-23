@@ -17,7 +17,7 @@ pub struct Test<T = RecordId> {
     pub creator: T,
 }
 impl Test {
-    pub fn create(
+    pub fn new(
         name: String,
         max_score: u32,
         creation_date: DateTime<Local>,
