@@ -28,3 +28,18 @@ export async function createTest(
 	).json();
 	return res;
 }
+export async function deleteTest(test_id: string, session_id?: string) {
+	if (!session_id) return null;
+	const res = await (
+		await fetch(`${import.meta.env.VITE_SERVER_URI}/tests/delete`, {
+			credentials: "include",
+			mode: "cors",
+			method: "post",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ test_id, session_id }),
+		})
+	).json();
+	return res;
+}

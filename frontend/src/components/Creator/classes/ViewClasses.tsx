@@ -21,7 +21,6 @@ export default function ViewClasses(props: ClasesViewProps) {
 				`${import.meta.env.VITE_SERVER_URI}/class/get_created?session_id=${id}`
 			);
 			const resJson = (await res.json()) as GetMembershipResult;
-			console.log(resJson);
 			return resJson;
 		}
 	);

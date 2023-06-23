@@ -250,7 +250,7 @@ async fn join_class(
         Err(_) => {
             return Ok(web::Json(JoinClassResult {
                 success: false,
-                error: Some("Failed to join class".to_string()),
+                error: Some("Failed to join class, you may already be a part of it.".to_string()),
             }))
         }
     };

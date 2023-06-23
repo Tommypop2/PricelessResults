@@ -1,5 +1,5 @@
 import { For, createResource } from "solid-js";
-export type Test = { name: string; max_score: number };
+export type Test = { name: string; max_score: number; id: string };
 type TestMembership = { test: Test };
 type TestMembershipResult = {
 	success: boolean;

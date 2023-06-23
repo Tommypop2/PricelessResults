@@ -1,9 +1,18 @@
-import { Chart, ChartData, ChartOptions, Colors, Legend, Title, Tooltip } from "chart.js";
+import {
+	Chart,
+	ChartData,
+	ChartOptions,
+	Colors,
+	Legend,
+	Title,
+	Tooltip,
+} from "chart.js";
 import { Line } from "solid-chartjs";
 import { onMount } from "solid-js";
 import { A } from "solid-start";
 import Container from "~/components/Container/Container";
 import ClassesView from "~/components/Creator/classes/ViewClasses";
+import { ViewTests } from "~/components/Creator/tests/ViewTests";
 import { useUserContext } from "~/context/UserProvider";
 
 export default function Create() {
@@ -48,6 +57,9 @@ export default function Create() {
 			</div>
 			<Container>
 				<ClassesView session_id={session_id()} />
+			</Container>
+			<Container>
+				<ViewTests session_id={session_id()} />
 			</Container>
 			<div>Slot 4</div>
 			<div>Slot 5</div>
