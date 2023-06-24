@@ -13,6 +13,7 @@ import { A } from "solid-start";
 import Container from "~/components/Container/Container";
 import ClassesView from "~/components/Creator/classes/ViewClasses";
 import { ViewTests } from "~/components/Creator/tests/ViewTests";
+import { Table } from "~/components/Table/TableView";
 import { useUserContext } from "~/context/UserProvider";
 
 export default function Create() {
@@ -51,7 +52,7 @@ export default function Create() {
 		maintainAspectRatio: false,
 	};
 	return (
-		<div class="grid grid-cols-4 p-2 gap-2">
+		<div class="grid grid-cols-4 p-2 gap-2 <md:grid-cols-2">
 			<div class="transition-all ease-in-out col-span-2">
 				<Line data={chartData} options={chartOptions} />
 			</div>
@@ -60,6 +61,26 @@ export default function Create() {
 			</Container>
 			<Container>
 				<ViewTests session_id={session_id()} />
+			</Container>
+			<Container>
+				{/* Kinda weird and overkill component */}
+				<Table
+					columns={{ Id: "id", EpicThing: "nice.cool" }}
+					data={[
+						{
+							nice: {
+								cool: {
+									type: "button",
+									onClick: (val: any) => {
+										console.log(val.id);
+									},
+									children: "Hello",
+								},
+							},
+							id: "1",
+						},
+					]}
+				/>
 			</Container>
 			<div>Slot 4</div>
 			<div>Slot 5</div>

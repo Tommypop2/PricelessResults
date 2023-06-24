@@ -3,6 +3,7 @@ import toast from "solid-toast";
 import { createClass, deleteClass } from "~/helpers/classes/class";
 import { VsCopy } from "solid-icons/vs";
 import { ImBin } from "solid-icons/im";
+import AddClass from "~/components/AddClass/AddClass";
 type ClassRecord = { name: string; members: number; id: string };
 type GetMembershipResult = {
 	success: boolean;
@@ -26,8 +27,8 @@ export default function ViewClasses(props: ClasesViewProps) {
 	);
 	const [newName, setNewName] = createSignal<HTMLInputElement>();
 	return (
-		<div class="flex flex-col rounded-xl h-full p-0 m-0 mx-4">
-			<table>
+		<div class="relative rounded-xl h-full p-0 m-0 mx-4 min-h-50">
+			<table class="">
 				<thead>
 					<tr>
 						<th class="w-[100%]">
@@ -43,7 +44,7 @@ export default function ViewClasses(props: ClasesViewProps) {
 					<For each={classes()?.classes}>
 						{(item, i) => {
 							return (
-								<tr class="border border-solid border-white rounded-xl py-20 text-xl">
+								<tr class="text-xl">
 									<td>{item.name}</td>
 									<td>{item.members}</td>
 									<td>
@@ -103,27 +104,24 @@ export default function ViewClasses(props: ClasesViewProps) {
 					</For>
 				</tbody>
 			</table>
-			<form
-				onsubmit={async (e) => {
-					e.preventDefault();
-					const el = newName();
-					if (!el) return;
-					const name = el.value;
-					const res = await createClass({ name }, props.session_id);
-					if (!res?.success || !res?.class) {
-						toast.error("Failed to create class");
-						return;
-					}
-					el.value = "";
-					toast.success("Class created");
-					let copy = classes();
-					if (!copy) return;
-					copy?.classes.push({ name, members: 0, id: res.class.id });
-					mutate({ ...copy });
-				}}
-			>
-				<input placeholder="Name" ref={setNewName} autocomplete="off" />
-			</form>
+			<div class="absolute bottom-0 p-b-2 w-full">
+				<AddClass
+					onAddClass={async (name) => {
+						if (!name) return false;
+						const res = await createClass({ name }, props.session_id);
+						if (!res?.success || !res?.class) {
+							toast.error("Failed to create class");
+							return false;
+						}
+						toast.success("Class created");
+						let copy = classes();
+						if (!copy) return false;
+						copy?.classes.push({ name, members: 0, id: res.class.id });
+						mutate({ ...copy });
+						return true;
+					}}
+				/>
+			</div>
 		</div>
 	);
 }

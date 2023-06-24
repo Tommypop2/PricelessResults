@@ -1,6 +1,7 @@
 import { ImBin } from "solid-icons/im";
 import { For, createResource, createSignal } from "solid-js";
 import toast from "solid-toast";
+import AddTest from "~/components/AddTest/AddTest";
 import { Test } from "~/components/User/tests/UserTests";
 import { createTest } from "~/helpers/tests/tests";
 type GetCreatedResult = {
@@ -23,11 +24,9 @@ export function ViewTests(props: ViewTestsProps) {
 			return resJson;
 		}
 	);
-	const [nameRef, setNameRef] = createSignal<HTMLInputElement>();
-	const [maxScoreRef, setMaxScoreRef] = createSignal<HTMLInputElement>();
 	return (
-		<div class="flex flex-col rounded-xl">
-			<h2>My Tests</h2>
+		<div class="relative rounded-xl h-full mx-2 m-0">
+			<h2 class="p-0 m-0">My Tests</h2>
 			<For each={tests()?.tests}>
 				{(item, i) => {
 					// This sucks, but it's ok for prototyping
@@ -40,22 +39,19 @@ export function ViewTests(props: ViewTestsProps) {
 					);
 				}}
 			</For>
-			<form
-				onSubmit={async (e) => {
-					e.preventDefault();
-					const nameEl = nameRef();
-					const maxScoreEl = maxScoreRef();
-					if (!nameEl || !maxScoreEl) return;
-					const name = nameEl.value;
-					const max_score = parseInt(maxScoreEl.value);
-					if (!name || !max_score) return;
-					await createTest({ name, max_score }, props.session_id!);
-				}}
-			>
-				<input placeholder="Name" ref={setNameRef}></input>
-				<input placeholder="Max Score" ref={setMaxScoreRef}></input>
-				<input type="submit"></input>
-			</form>
+			<div class="absolute bottom-0 p-b-2 w-full">
+				<AddTest
+					onAddTest={async (name, max_score) => {
+						if (!name || !max_score) return false;
+						if (await createTest({ name, max_score }, props.session_id!)) {
+							toast.success("Test created");
+							return true;
+						}
+						toast.error("Failed to create test");
+						return false;
+					}}
+				/>
+			</div>
 		</div>
 	);
 }
