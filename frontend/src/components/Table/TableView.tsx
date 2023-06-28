@@ -8,14 +8,16 @@ interface TableProps {
 }
 export function Table(props: TableProps) {
 	function resolveChild(item: any, key: string) {
-		// Handle button as a special case, because the onclick handler needs to have parameters injected
 		const keys = key.split(".");
 		if (keys.length === 0) return item;
 		let el = item[keys[0]];
 		for (const k of keys.slice(1)) {
 			const temp = el[k];
+			// Handle button as a special case, because the onclick handler needs to have the item parameter injected
 			if (temp.type === "button") {
-				return <button onClick={() => temp.onClick(item)}>{temp.children}</button>;
+				return (
+					<button onClick={() => temp.onClick(item)}>{temp.children}</button>
+				);
 			}
 			if (!temp) break;
 			el = temp;

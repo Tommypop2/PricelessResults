@@ -54,16 +54,26 @@ async fn index(
         }
     };
     let creator_id = session.user.user_id;
-    let tests: Vec<Test> = state
-        .surreal
-        .db
-        .query(format!(
-            "SELECT * FROM test WHERE creator.user_id = {creator_id}"
-        ))
-        .await
-        .unwrap()
-        .take(0)
-        .unwrap();
+    // let tests: Vec<Test> = state
+    //     .surreal
+    //     .db
+    //     .query(format!(
+    //         "SELECT * FROM test WHERE creator.user_id = {creator_id}"
+    //     ))
+    //     .await
+    //     .unwrap()
+    //     .take(0)
+    //     .unwrap();
+    let tests = match test_handler::read_owned(&state.surreal.db, &creator_id).await {
+        Ok(tests) => tests,
+        _ => {
+            return Ok(web::Json(TestsResult {
+                success: false,
+                error: Some("Failed to read tests".into()),
+                tests: None,
+            }))
+        }
+    };
     Ok(web::Json(TestsResult {
         success: true,
         error: None,
@@ -254,9 +264,56 @@ async fn get_assigned_tests(
         };
     Ok(TestMembershipRecordsResult::success_json(memberships))
 }
+#[derive(Deserialize)]
+struct DeleteTestParams {
+    test_id: String,
+    session_id: String,
+}
+#[post("delete")]
+async fn delete_test(
+    state: web::Data<AppState>,
+    json: web::Json<DeleteTestParams>,
+) -> actix_web::Result<impl actix_web::Responder> {
+    let tst = match test_handler::delete_test(&state.surreal.db, &json.test_id).await {
+        Ok(deleted) => deleted,
+        _ => return Ok(TestResult::failure_json("Failed to delete test")),
+    };
+    Ok(TestResult::success_json(tst))
+}
+#[derive(Deserialize)]
+struct FuzzyFindTestParams {
+    session_id: String,
+    search: String,
+}
+#[get("fuzzy_find")]
+async fn fuzzy_find_test(
+    state: web::Data<AppState>,
+    query: web::Query<FuzzyFindTestParams>,
+) -> actix_web::Result<impl actix_web::Responder> {
+    let user_session = session_handler::get_session(&query.session_id, &state.surreal.db).await;
+    let session = match user_session {
+        Some(session) => session,
+        None => return Ok(TestsResult::failure_json("No session with this id")),
+    };
+    // If the search query is empty, return all tests owned by the user
+    let tests_res = if query.search.len() == 0usize {
+        test_handler::read_owned(&state.surreal.db, &session.user.user_id).await
+    } else {
+        test_handler::read_tests_fuzzy_name(&state.surreal.db, &query.search, &session.user.user_id)
+            .await
+    };
+    let tests = match tests_res {
+        Ok(tests) => tests,
+        Err(_) => return Ok(TestsResult::failure_json("Failed to fuzzy find tests")),
+    };
+    Ok(TestsResult::success_json(tests))
+}
+
 pub fn test_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(index)
         .service(create_test)
         .service(get_assigned_tests)
-        .service(assign_test);
+        .service(assign_test)
+        .service(delete_test)
+        .service(fuzzy_find_test);
 }

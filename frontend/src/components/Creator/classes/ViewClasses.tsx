@@ -4,6 +4,7 @@ import { createClass, deleteClass } from "~/helpers/classes/class";
 import { VsCopy } from "solid-icons/vs";
 import { ImBin } from "solid-icons/im";
 import AddClass from "~/components/AddClass/AddClass";
+import { useNavigate } from "solid-start";
 type ClassRecord = { name: string; members: number; id: string };
 type GetMembershipResult = {
 	success: boolean;
@@ -26,32 +27,42 @@ export default function ViewClasses(props: ClasesViewProps) {
 		}
 	);
 	const [newName, setNewName] = createSignal<HTMLInputElement>();
+	const navigate = useNavigate();
 	return (
-		<div class="relative rounded-xl h-full p-0 m-0 mx-4 min-h-50">
-			<table class="">
+		<div class="relative rounded-xl h-full p-0 m-0 mx-4 min-h-50 text-left">
+			<table class="border-collapse">
 				<thead>
 					<tr>
-						<th class="w-[100%]">
+						<th class="w-full">
 							<h2>My Classes</h2>
 						</th>
 						<th>
 							<h2>Members</h2>
 						</th>
-						<th></th>
+						<th class="min-w-[44px]"></th>
+						<th class="min-w-[44px]"></th>
 					</tr>
 				</thead>
 				<tbody>
 					<For each={classes()?.classes}>
 						{(item, i) => {
 							return (
-								<tr class="text-xl">
+								<tr
+									class="text-xl"
+									onClick={() => {
+										const id = item.id.split(":")[1];
+										if (!id) return;
+										navigate(`/creator/class/${id}`);
+									}}
+								>
 									<td>{item.name}</td>
 									<td>{item.members}</td>
 									<td>
 										<button
 											title="Copy join link"
 											class="rounded bg-transparent border-none active:animate-jello animate-duration-75"
-											onClick={() => {
+											onClick={(e) => {
+												e.stopPropagation();
 												const id = item.id.split(":")[1];
 												if (!id) return;
 												const origin = window.location.origin;
@@ -67,7 +78,8 @@ export default function ViewClasses(props: ClasesViewProps) {
 									<td>
 										<button
 											class="rounded bg-transparent border-none active:animate-jello animate-duration-75"
-											onClick={async () => {
+											onClick={async (e) => {
+												e.stopPropagation();
 												const id = item.id.split(":")[1];
 												if (!id) return;
 												if (

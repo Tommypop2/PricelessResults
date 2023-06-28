@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
-use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
+use surrealdb::{engine::remote::ws::Client, opt::RecordId, sql::Table, Surreal};
 
 use crate::Record;
 
-pub fn generate_id(user_id: &String, group_id: &str) -> String {
-    user_id.clone() + "-" + group_id
+pub fn generate_id(user_id: &str, group_id: &str) -> String {
+    user_id.to_owned() + "-" + group_id
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MembershipType<T> {
@@ -37,5 +37,29 @@ where
         .create((membership.table, membership.id))
         .content(membership.membership)
         .await?;
+    Ok(())
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CountRecord {
+    pub count: u32,
+}
+
+pub async fn clear_memberships(
+    db: &Surreal<Client>,
+    membership_name: &str,
+    membership_id: &str,
+) -> surrealdb::Result<()> {
+    db.query(format!(
+        "DELETE {membership_name}_membership WHERE {membership_name}=$thing"
+    ))
+    .bind((
+        "thing",
+        RecordId {
+            tb: membership_name.to_owned(),
+            id: membership_id.into(),
+        },
+    ))
+    .await?;
     Ok(())
 }

@@ -36,7 +36,7 @@ export const ThemeProvider: ParentComponent = (props) => {
 	const updateTheme = (newTheme: Theme) => {
 		setTheme(newTheme);
 		const maxAge = 365 * 24 * 60 * 60;
-		document.cookie = `theme=${newTheme};max-age=${maxAge};`;
+		document.cookie = `theme=${newTheme};max-age=${maxAge};path=/;`;
 		channel.postMessage(newTheme);
 		return newTheme;
 	};

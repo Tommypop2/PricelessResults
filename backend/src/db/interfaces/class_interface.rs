@@ -4,7 +4,9 @@ use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
 use crate::Record;
 
-use super::common::{add_membership, generate_id, Membership, MembershipType};
+use super::common::{
+    add_membership, clear_memberships, generate_id, CountRecord, Membership, MembershipType,
+};
 
 // Classes will probably just be an alias for applying tests to many users at once, and for class averages. Other than that, they shouldn't actually need to have much functionality
 #[derive(Serialize, Deserialize, Debug)]
@@ -103,7 +105,7 @@ pub async fn update_class<T: Serialize>(
 }
 pub async fn delete_class(db: &Surreal<Client>, id: &str) -> surrealdb::Result<Class> {
     // Safer to clear the memberships first
-    clear_memberships(db, id).await?;
+    clear_memberships(db, "class", id).await?;
     let res: Class = db.delete(("class", id)).await?;
     Ok(res)
 }
@@ -192,10 +194,7 @@ pub async fn read_class_memberships(
         .take(0)?;
     Ok(memberships)
 }
-#[derive(Debug, Deserialize)]
-struct CountRecord {
-    count: u32,
-}
+
 pub async fn count_members(db: &Surreal<Client>, class_id: &str) -> surrealdb::Result<u32> {
     let count: Option<CountRecord> = db
         .query("SELECT count FROM SELECT count(), class FROM class_membership WHERE class=$class GROUP BY class")
@@ -212,17 +211,4 @@ pub async fn count_members(db: &Surreal<Client>, class_id: &str) -> surrealdb::R
         return Ok(count.count);
     }
     return Ok(0);
-}
-
-pub async fn clear_memberships(db: &Surreal<Client>, class_id: &str) -> surrealdb::Result<()> {
-    db.query("DELETE class_membership WHERE class=$class")
-        .bind((
-            "class",
-            RecordId {
-                tb: "class".to_owned(),
-                id: class_id.into(),
-            },
-        ))
-        .await?;
-    Ok(())
 }

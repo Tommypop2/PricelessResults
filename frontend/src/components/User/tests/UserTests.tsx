@@ -1,15 +1,20 @@
 import { For, createResource } from "solid-js";
-export type Test = { name: string; max_score: number; id: string };
+export type Test = {
+	name: string;
+	max_score: number;
+	id: string;
+	assignees: number;
+};
 type TestMembership = { test: Test };
 type TestMembershipResult = {
 	success: boolean;
 	memberships: TestMembership[];
 	error?: string;
 };
-type ClasesViewProps = {
+type TestsViewProps = {
 	session_id?: string;
 };
-export default function TestsView(props: ClasesViewProps) {
+export default function TestsView(props: TestsViewProps) {
 	const [tests] = createResource(
 		() => props.session_id,
 		async (id) => {
