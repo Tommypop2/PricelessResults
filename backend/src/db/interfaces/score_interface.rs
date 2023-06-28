@@ -35,3 +35,6 @@ pub async fn read_score(db: &Surreal<Client>, score_id: &str) -> surrealdb::Resu
     let score: Score = db.select(("score", score_id)).await?;
     Ok(score)
 }
+pub async fn read_scores(db: &Surreal<Client>, test_id: &str, class_id: &str) {
+    todo!("Do this");
+}

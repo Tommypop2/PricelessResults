@@ -1,4 +1,4 @@
-use actix_web::{get, web};
+use actix_web::{get, post, web};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -15,7 +15,7 @@ async fn index() -> actix_web::Result<impl actix_web::Responder> {
         "Welcome to the base route for the score endpoint",
     ))
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct CreateScoreParams {
     user_id: String,
     test_id: String,
@@ -45,12 +45,13 @@ impl JsonResult<Score> for ScoreResult {
         }
     }
 }
-#[get("create")]
+#[post("create")]
 async fn create_score(
     state: web::Data<AppState>,
-    query: web::Query<CreateScoreParams>,
+    json: web::Json<CreateScoreParams>,
 ) -> actix_web::Result<impl actix_web::Responder> {
-    let session_id = &query.session_id;
+    dbg!("Running");
+    let session_id = &json.session_id;
     let session_opt = session_handler::get_session(session_id, &state.surreal.db).await;
     let session = match session_opt {
         Some(session) => session,
@@ -59,7 +60,7 @@ async fn create_score(
         }
     };
     // Verify that test exists
-    let test = match test_handler::read_test(&state.surreal.db, &query.test_id).await {
+    let test = match test_handler::read_test(&state.surreal.db, &json.test_id).await {
         Ok(Some(test)) => test,
         Err(_) | Ok(None) => {
             return Ok(ScoreResult::failure_json("No test with this id"));
@@ -71,7 +72,7 @@ async fn create_score(
             "You are not authorised to assign this test",
         ));
     }
-    let new_score = Score::new(&query.user_id, &query.test_id, query.score);
+    let new_score = Score::new(&json.user_id, &json.test_id, json.score);
     let res = score_handler::create_score(&state.surreal.db, &new_score).await;
     if let Ok(score_res) = res {
         return Ok(ScoreResult::success_json(score_res));

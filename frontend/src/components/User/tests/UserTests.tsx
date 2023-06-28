@@ -1,12 +1,13 @@
 import { For, createResource } from "solid-js";
+import { User } from "~/context/UserProvider";
 export type Test = {
 	name: string;
 	max_score: number;
 	id: string;
 	assignees: number;
 };
-type TestMembership = { test: Test };
-type TestMembershipResult = {
+export type TestMembership = { test: Test, user?: User };
+export type TestMembershipResult = {
 	success: boolean;
 	memberships: TestMembership[];
 	error?: string;

@@ -1,14 +1,14 @@
+import { Result } from "../types";
+
 type Class = {
 	name: string;
 	creation_date: Date;
 	creator: string;
 	id: string;
 };
-type CreateClassResult = {
-	success: boolean;
-	class: Class | null;
-	error: string | null;
-};
+interface CreateClassResult extends Result {
+	class: Class | null
+}
 export async function createClass(
 	user_class: Omit<Class, "id" | "creation_date" | "creator">,
 	session_id?: string
@@ -31,10 +31,7 @@ type DeleteClassResult = {
 	success: boolean;
 	error?: string;
 };
-export async function deleteClass(
-	class_id: string,
-	session_id?: string
-) {
+export async function deleteClass(class_id: string, session_id?: string) {
 	if (!session_id) return null;
 	const res: DeleteClassResult = await (
 		await fetch(`${import.meta.env.VITE_SERVER_URI}/class/delete`, {

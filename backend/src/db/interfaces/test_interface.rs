@@ -176,10 +176,11 @@ pub async fn add_test_member(
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct TestMembershipRecord {
+pub struct TestMembershipRecord<U = RecordId, C = RecordId> {
     id: RecordId,
     test: Test,
-    user: RecordId,
+    user: U,
+    class: C,
 }
 pub async fn read_test_memberships(
     db: &Surreal<Client>,
@@ -194,20 +195,45 @@ pub async fn read_test_memberships(
                 id: user_id.into(),
             },
         ))
-        .await
-        .unwrap()
-        .take(0)
-        .unwrap();
+        .await?
+        .take(0)?;
     Ok(memberships)
 }
-
+pub async fn read_test_memberships_by_class(
+    db: &Surreal<Client>,
+    class_id: &str,
+    test_id: &str,
+) -> surrealdb::Result<Vec<TestMembershipRecord<User>>> {
+    let memberships: Vec<TestMembershipRecord<User>> = db
+        .query(
+            "SELECT *, test.*, user.* FROM test_membership WHERE class = $class AND test = $test",
+        )
+        .bind((
+            "class",
+            RecordId {
+                tb: "class".to_owned(),
+                id: class_id.into(),
+            },
+        ))
+        .bind((
+            "test",
+            RecordId {
+                tb: "test".to_owned(),
+                id: test_id.into(),
+            },
+        ))
+        .await?
+        .take(0)?;
+    Ok(memberships)
+}
 pub async fn add_test_to_class(
     db: &Surreal<Client>,
     class_id: &str,
     test_id: &str,
 ) -> surrealdb::Result<Test> {
-    let generated = generate_id(class_id, test_id);
-    db.query("INSERT INTO test_membership SELECT $id as id, user.id AS user, $test AS test FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)").bind(("id", generated)).bind(("test", RecordId{
+    // Don't like doing this, but it's necessary to avoid 2 db queries for now. Ideally, it'd be possible to extract the pure id, without any special characters from the record
+    // It seems for now hashing is the only reasonable method to not include those characters in the id
+    db.query("INSERT INTO test_membership SELECT crypto::sha1(string::concat(user.id.id, test.id.id)) as id, user.id AS user, $test AS test, $class as class FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)").bind(("test", RecordId{
         tb: "test".to_owned(),
         id: test_id.into()
     })).bind(("class", RecordId{

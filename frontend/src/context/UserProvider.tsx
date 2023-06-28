@@ -9,7 +9,7 @@ import {
 import { isServer } from "solid-js/web";
 import { parseCookie } from "solid-start";
 import { useRequest } from "solid-start/server";
-type User = {
+export type User = {
 	user_id: string;
 	username: string;
 	email: string;

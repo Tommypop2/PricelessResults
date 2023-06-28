@@ -8,7 +8,7 @@ use crate::{
     },
     AppState,
 };
-use actix_web::{get, post, web};
+use actix_web::{get, post, web, Responder};
 use chrono::Local;
 use serde::{Deserialize, Serialize};
 #[derive(Deserialize)]
@@ -45,13 +45,7 @@ async fn index(
     let user_session = session_handler::get_session(&query.session_id, &state.surreal.db).await;
     let session = match user_session {
         Some(session) => session,
-        None => {
-            return Ok(web::Json(TestsResult {
-                success: false,
-                error: Some("No session with this id".into()),
-                tests: None,
-            }))
-        }
+        None => return Ok(TestsResult::failure_json("No session with this id")),
     };
     let creator_id = session.user.user_id;
     // let tests: Vec<Test> = state
@@ -66,19 +60,9 @@ async fn index(
     //     .unwrap();
     let tests = match test_handler::read_owned(&state.surreal.db, &creator_id).await {
         Ok(tests) => tests,
-        _ => {
-            return Ok(web::Json(TestsResult {
-                success: false,
-                error: Some("Failed to read tests".into()),
-                tests: None,
-            }))
-        }
+        _ => return Ok(TestsResult::failure_json("Failed to read tests")),
     };
-    Ok(web::Json(TestsResult {
-        success: true,
-        error: None,
-        tests: Some(tests),
-    }))
+    Ok(TestsResult::success_json(tests))
 }
 #[derive(Serialize)]
 struct TestResult {
@@ -121,13 +105,7 @@ async fn create_test(
     let session_opt = session_handler::get_session(session_id, &state.surreal.db).await;
     let session = match session_opt {
         Some(session) => session,
-        None => {
-            return Ok(web::Json(TestResult {
-                success: false,
-                error: Some("No session with this id".into()),
-                test: None,
-            }));
-        }
+        None => return Ok(TestResult::failure_json("No session with this id")),
     };
     let created_test = test_handler::create_test(
         &state.surreal.db,
@@ -173,20 +151,20 @@ async fn assign_test(
     let session = match session_opt {
         Some(session) => session,
         None => {
-            return Ok(TestResult::failure_json("No session with this id".into()));
+            return Ok(TestResult::failure_json("No session with this id"));
         }
     };
     // Verify that test exists
     let test = match test_handler::read_test(&state.surreal.db, &json.test_id).await {
         Ok(Some(test)) => test,
         Err(_) | Ok(None) => {
-            return Ok(TestResult::failure_json("No test with this id".into()));
+            return Ok(TestResult::failure_json("No test with this id"));
         }
     };
     // Verify that user is owner of that test
     if !(test.creator.user_id == session.user.user_id) {
         return Ok(TestResult::failure_json(
-            "You are not authorised to assign this test".into(),
+            "You are not authorised to assign this test",
         ));
     }
     // Assigning test to class
@@ -195,29 +173,23 @@ async fn assign_test(
             test_handler::add_test_to_class(&state.surreal.db, class_id, &json.test_id).await;
         match result {
             Ok(test) => return Ok(TestResult::success_json(test)),
-            Err(_) => {
-                return Ok(TestResult::failure_json(
-                    "There was an error somewhere".into(),
-                ))
-            }
+            Err(_) => return Ok(TestResult::failure_json("There was an error somewhere")),
         };
     }
     // Assigning to specific user
     if let Some(user_id) = &json.user_id {}
 
     // Neither class_id, or user_id was provided
-    Ok(TestResult::failure_json(
-        "No class_id or user_id provided".into(),
-    ))
+    Ok(TestResult::failure_json("No class_id or user_id provided"))
 }
 #[derive(Serialize, Deserialize)]
-struct TestMembershipRecordsResult {
+struct TestMembershipRecordsResult<U> {
     success: bool,
     error: Option<String>,
-    memberships: Option<Vec<TestMembershipRecord>>,
+    memberships: Option<Vec<TestMembershipRecord<U>>>,
 }
-impl JsonResult<Vec<TestMembershipRecord>> for TestMembershipRecordsResult {
-    fn success(record: Vec<TestMembershipRecord>) -> Self {
+impl<U> JsonResult<Vec<TestMembershipRecord<U>>> for TestMembershipRecordsResult<U> {
+    fn success(record: Vec<TestMembershipRecord<U>>) -> Self {
         Self {
             success: true,
             error: None,
@@ -242,7 +214,7 @@ async fn get_assigned_tests(
         Some(session) => session,
         None => {
             return Ok(TestMembershipRecordsResult::failure_json(
-                "No session with this id".into(),
+                "No session with this id",
             ))
         }
     };
@@ -251,10 +223,61 @@ async fn get_assigned_tests(
             Ok(memberships) => memberships,
             Err(_) => {
                 return Ok(TestMembershipRecordsResult::failure_json(
-                    "Failed to read test memberships".into(),
+                    "Failed to read test memberships",
                 ))
             }
         };
+    Ok(TestMembershipRecordsResult::success_json(memberships))
+}
+#[derive(Deserialize)]
+struct GetAssignedInClassParams {
+    session_id: String,
+    class_id: String,
+    test_id: String,
+}
+#[get("get_assigned_in_class")]
+async fn get_assigned_tests_by_class(
+    state: web::Data<AppState>,
+    query: web::Query<GetAssignedInClassParams>,
+) -> actix_web::Result<impl Responder> {
+    let user_session = session_handler::get_session(&query.session_id, &state.surreal.db).await;
+    let session = match user_session {
+        Some(session) => session,
+        None => {
+            return Ok(TestMembershipRecordsResult::failure_json(
+                "No session with this id",
+            ))
+        }
+    };
+    let test_res = test_handler::read_test(&state.surreal.db, &query.test_id).await;
+    match test_res {
+        Ok(Some(test)) => {
+            if test.creator.user_id != session.user.user_id {
+                return Ok(TestMembershipRecordsResult::failure_json(
+                    "You are not authorised to view this test",
+                ));
+            }
+        }
+        _ => {
+            return Ok(TestMembershipRecordsResult::failure_json(
+                "No test with this id",
+            ))
+        }
+    }
+    let memberships = match test_handler::read_test_memberships_by_class(
+        &state.surreal.db,
+        &query.class_id,
+        &query.test_id,
+    )
+    .await
+    {
+        Ok(memberships) => memberships,
+        Err(_) => {
+            return Ok(TestMembershipRecordsResult::failure_json(
+                "Failed to read test memberships",
+            ))
+        }
+    };
     Ok(TestMembershipRecordsResult::success_json(memberships))
 }
 #[derive(Deserialize)]
@@ -306,6 +329,7 @@ pub fn test_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(index)
         .service(create_test)
         .service(get_assigned_tests)
+        .service(get_assigned_tests_by_class)
         .service(assign_test)
         .service(delete_test)
         .service(fuzzy_find_test);
