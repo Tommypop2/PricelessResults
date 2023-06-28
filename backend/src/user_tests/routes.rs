@@ -193,15 +193,8 @@ async fn assign_test(
     if let Some(class_id) = &json.class_id {
         let result =
             test_handler::add_test_to_class(&state.surreal.db, class_id, &json.test_id).await;
-        // Kinda annoying. Don't really actually need to return a TestResult.
         match result {
-            Ok(_) => {
-                return Ok(web::Json(TestResult {
-                    success: true,
-                    test: None,
-                    error: None,
-                }))
-            }
+            Ok(test) => return Ok(TestResult::success_json(test)),
             Err(_) => {
                 return Ok(TestResult::failure_json(
                     "There was an error somewhere".into(),

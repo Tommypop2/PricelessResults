@@ -2,11 +2,15 @@ import { createResource, createSignal } from "solid-js";
 import { useParams } from "solid-start";
 import Container from "~/components/Container/Container";
 import Search from "~/components/Creator/tests/Search";
-import { TestsView } from "~/components/Creator/tests/TestsView";
+import {
+	GetCreatedResult,
+	TestsView,
+} from "~/components/Creator/tests/TestsView";
 import { useUserContext } from "~/context/UserProvider";
 import { FaSolidShare } from "solid-icons/fa";
 import { assignTest } from "~/helpers/tests/tests";
 import toast from "solid-toast";
+import { Test } from "~/components/User/tests/UserTests";
 
 export default function ClassView() {
 	const params = useParams();
@@ -25,7 +29,7 @@ export default function ClassView() {
 		}
 	);
 	const [searchQuery, setSearchQuery] = createSignal("");
-	const [tests] = createResource(
+	const [tests, { mutate }] = createResource(
 		() => [userCtx.user()?.session_id, searchQuery()],
 		async ([session_id, query]) => {
 			const res = await fetch(
@@ -34,7 +38,7 @@ export default function ClassView() {
 				}/tests/fuzzy_find?session_id=${session_id}&search=${query}`
 			);
 			const resJson = await res.json();
-			return resJson;
+			return resJson as GetCreatedResult;
 		}
 	);
 	return (
@@ -47,7 +51,7 @@ export default function ClassView() {
 					<div class="relative h-full mx-2 text-left">
 						<TestsView
 							session_id={userCtx.user()?.session_id}
-							tests={tests.latest}
+							tests={tests.latest!}
 							updateTests={() => {}}
 							onTestClicked={() => {}}
 							onButtonClicked={async (test) => {
@@ -58,7 +62,19 @@ export default function ClassView() {
 									params.id,
 									userCtx.user()?.session_id!
 								);
-								console.log(res);
+								const newTestData = res.test as Test;
+								mutate((prev) => {
+									if (!prev) return;
+									return {
+										...prev,
+										tests: prev.tests.map((test) => {
+											if (test.id === newTestData.id) {
+												return newTestData;
+											}
+											return test;
+										}),
+									};
+								});
 								if (res.success) {
 									toast.success("Test assigned successfully");
 								}

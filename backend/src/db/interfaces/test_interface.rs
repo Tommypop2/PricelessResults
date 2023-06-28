@@ -205,7 +205,7 @@ pub async fn add_test_to_class(
     db: &Surreal<Client>,
     class_id: &str,
     test_id: &str,
-) -> surrealdb::Result<()> {
+) -> surrealdb::Result<Test> {
     let generated = generate_id(class_id, test_id);
     db.query("INSERT INTO test_membership SELECT $id as id, user.id AS user, $test AS test FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)").bind(("id", generated)).bind(("test", RecordId{
         tb: "test".to_owned(),
@@ -215,8 +215,8 @@ pub async fn add_test_to_class(
         id: class_id.into(),
     })).await?;
     let count = count_members(db, test_id).await?;
-    update_test(db, AssigneesCount { assignees: count }, test_id).await?;
-    Ok(())
+    let tst = update_test(db, AssigneesCount { assignees: count }, test_id).await?;
+    Ok(tst)
 }
 
 pub async fn count_members(db: &Surreal<Client>, test_id: &str) -> surrealdb::Result<u32> {
