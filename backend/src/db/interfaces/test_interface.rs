@@ -233,7 +233,7 @@ pub async fn add_test_to_class(
 ) -> surrealdb::Result<Test> {
     // Don't like doing this, but it's necessary to avoid 2 db queries for now. Ideally, it'd be possible to extract the pure id, without any special characters from the record
     // It seems for now hashing is the only reasonable method to not include those characters in the id
-    db.query("INSERT INTO test_membership SELECT crypto::sha1(string::concat(user.id.id, test.id.id)) as id, user.id AS user, $test AS test, $class as class FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)").bind(("test", RecordId{
+    db.query("INSERT INTO test_membership SELECT crypto::sha1(string::concat(user.id.id, test.id.id)) as id, user.id AS user, $test AS test FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)").bind(("test", RecordId{
         tb: "test".to_owned(),
         id: test_id.into()
     })).bind(("class", RecordId{
