@@ -2,7 +2,9 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
-#[derive(Serialize, Deserialize)]
+use super::common::generate_id;
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Score<T = RecordId, U = RecordId> {
     pub id: Option<RecordId>,
     pub score: Option<u32>,
@@ -28,13 +30,38 @@ impl Score {
     }
 }
 pub async fn create_score(db: &Surreal<Client>, score: &Score) -> surrealdb::Result<Score> {
-    let new_score: Score = db.create("score").content(score).await?;
+    let new_score: Score = db
+        .create((
+            "score",
+            &generate_id(&score.user.id.to_string(), &score.test.id.to_string()),
+        ))
+        .content(score)
+        .await?;
     Ok(new_score)
 }
 pub async fn read_score(db: &Surreal<Client>, score_id: &str) -> surrealdb::Result<Score> {
     let score: Score = db.select(("score", score_id)).await?;
     Ok(score)
 }
-pub async fn read_scores(db: &Surreal<Client>, test_id: &str, class_id: &str) {
-    todo!("Do this");
+pub async fn read_scores(db: &Surreal<Client>, test_id: &str) -> surrealdb::Result<Vec<Score>> {
+    let scores: Vec<Score> = db
+        .query("SELECT * FROM score WHERE test = $test")
+        .bind((
+            "test",
+            RecordId {
+                tb: "test".to_owned(),
+                id: test_id.into(),
+            },
+        ))
+        .await?
+        .take(0)?;
+    Ok(scores)
+}
+pub async fn update_score<T: Serialize>(
+    db: &Surreal<surrealdb::engine::remote::ws::Client>,
+    update: T,
+    score_id: &str,
+) -> surrealdb::Result<Score> {
+    let updated: Score = db.update(("score", score_id)).merge(update).await?;
+    Ok(updated)
 }

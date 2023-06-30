@@ -176,11 +176,10 @@ pub async fn add_test_member(
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct TestMembershipRecord<U = RecordId, C = RecordId> {
+pub struct TestMembershipRecord<U = RecordId> {
     id: RecordId,
     test: Test,
     user: U,
-    class: C,
 }
 pub async fn read_test_memberships(
     db: &Surreal<Client>,
@@ -206,7 +205,7 @@ pub async fn read_test_memberships_by_class(
 ) -> surrealdb::Result<Vec<TestMembershipRecord<User>>> {
     let memberships: Vec<TestMembershipRecord<User>> = db
         .query(
-            "SELECT *, test.*, user.* FROM test_membership WHERE class = $class AND test = $test",
+            "SELECT *, test.*, user.* FROM test_membership WHERE test=$test AND (SELECT user FROM class_membership WHERE class=$class).user CONTAINS user",
         )
         .bind((
             "class",

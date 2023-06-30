@@ -1,5 +1,5 @@
 import { createResource, createSignal } from "solid-js";
-import { useParams } from "solid-start";
+import { useNavigate, useParams } from "solid-start";
 import Container from "~/components/Container/Container";
 import Search from "~/components/Creator/tests/Search";
 import {
@@ -11,10 +11,12 @@ import { FaSolidShare } from "solid-icons/fa";
 import { assignTest } from "~/helpers/tests/tests";
 import toast from "solid-toast";
 import { Test } from "~/components/User/tests/UserTests";
-
+import { IoRemoveCircleSharp } from "solid-icons/io";
 export default function ClassView() {
 	const params = useParams();
 	const userCtx = useUserContext();
+	const navigate = useNavigate();
+	const session_id = () => userCtx.user()?.session_id;
 	// Get class data
 	const [data] = createResource(
 		() => [params.id, userCtx.user()?.session_id],
@@ -29,8 +31,8 @@ export default function ClassView() {
 		}
 	);
 	const [searchQuery, setSearchQuery] = createSignal("");
-	const [tests, { mutate }] = createResource(
-		() => [userCtx.user()?.session_id, searchQuery()],
+	const [allTests, { mutate }] = createResource(
+		() => [session_id(), searchQuery()],
 		async ([session_id, query]) => {
 			const res = await fetch(
 				`${
@@ -46,22 +48,25 @@ export default function ClassView() {
 			<div class="flex flex-row justify-center">
 				<h1 class="text-6xl m-3">{data()?.class.name}</h1>
 			</div>
-			<div class="grid grid-cols-4">
+			<div class="grid grid-cols-4 gap-2">
 				<Container class="min-h-100">
 					<div class="relative h-full mx-2 text-left">
 						<TestsView
-							session_id={userCtx.user()?.session_id}
-							tests={tests.latest!}
+							session_id={session_id()}
+							tests={allTests.latest!}
 							updateTests={() => {}}
-							onTestClicked={() => {}}
+							onTestClicked={(test) => {
+								const testId = test.id.split(":")[1];
+								const classId = data()?.class.id.split(":")[1];
+								if (!testId || !classId) return;
+								navigate(
+									`/creator/test/add_scores?class_id=${classId}&test_id=${testId}`
+								);
+							}}
 							onButtonClicked={async (test) => {
 								const id = test.id.split(":")[1];
 								if (!id) return;
-								const res = await assignTest(
-									id,
-									params.id,
-									userCtx.user()?.session_id!
-								);
+								const res = await assignTest(id, params.id, session_id()!);
 								const newTestData = res.test as Test;
 								mutate((prev) => {
 									if (!prev) return;
@@ -86,6 +91,17 @@ export default function ClassView() {
 							<Search onChange={setSearchQuery} />
 						</div>
 					</div>
+				</Container>
+				<Container>
+					<TestsView
+						session_id={session_id()}
+						tests={allTests.latest!}
+						updateTests={() => {}}
+						onTestClicked={() => {}}
+						buttonIcon={IoRemoveCircleSharp}
+						buttonTitle="Assign To Class"
+						onButtonClicked={() => {}}
+					/>
 				</Container>
 			</div>
 		</>
