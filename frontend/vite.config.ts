@@ -5,7 +5,12 @@ import vercel from "solid-start-vercel";
 import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig({
 	plugins: [
-		solid({ adapter: vercel({ edge: true }) }),
+		solid({
+			adapter: vercel(
+				{}
+				// { edge: true }
+			),
+		}),
 		UnoCss(),
 		VitePWA({
 			registerType: "autoUpdate",
