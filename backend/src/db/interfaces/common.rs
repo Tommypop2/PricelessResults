@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use surrealdb::{engine::remote::ws::Client, opt::RecordId, sql::Table, Surreal};
+use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
 use crate::Record;
 
