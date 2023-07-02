@@ -89,6 +89,7 @@ export default function Navbar(props: NavbarProps) {
 					return (
 						<div class="h-full flex">
 							<A
+								title={item.name}
 								href={item.href}
 								class="inline-flex items-center m-0 px-5 py-3 rounded-t-1 no-underline"
 								activeClass={
