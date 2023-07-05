@@ -50,4 +50,10 @@ export const ThemeProvider: ParentComponent = (props) => {
 		</ThemeContext.Provider>
 	);
 };
-export const useThemeContext = () => useContext(ThemeContext)!;
+export const useThemeContext = () => {
+	const ctx = useContext(ThemeContext);
+	if (!ctx) {
+		throw Error("Theme context not found");
+	}
+	return ctx;
+};

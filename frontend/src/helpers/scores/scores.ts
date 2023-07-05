@@ -1,6 +1,6 @@
 import { Result } from "../types";
 
-type Score = {
+export type Score = {
 	user_id: string;
 	test_id: string;
 	score: number;
@@ -28,21 +28,17 @@ export async function createScore(score: Score, session_id?: string) {
 	).json();
 	return res as ScoreResult;
 }
-export async function getScores(
-	test_id: string,
-	class_id: string,
-	session_id?: string
-) {
+export async function getUserScores(user_id: string, session_id?: string) {
 	if (!session_id) return null;
 	const res = await (
-		await fetch(`${import.meta.env.VITE_SERVER_URI}/score/get`, {
+		await fetch(`${import.meta.env.VITE_SERVER_URI}/score/read`, {
 			credentials: "include",
 			mode: "cors",
 			method: "post",
 			headers: {
 				"Content-Type": "application/json",
 			},
-			body: JSON.stringify({ test_id, class_id, session_id }),
+			body: JSON.stringify({ user_id, session_id }),
 		})
 	).json();
 	return res as ScoresResult;

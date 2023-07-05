@@ -2,7 +2,9 @@ import { For, createResource } from "solid-js";
 import { useSearchParams } from "solid-start";
 import { TestMembershipResult } from "~/components/User/tests/UserTests";
 import { useUserContext } from "~/context/UserProvider";
-import { createScore } from "~/helpers/scores/scores";
+import { Score, createScore } from "~/helpers/scores/scores";
+import { throttle } from "@solid-primitives/scheduled";
+import toast from "solid-toast";
 type ScoreRecord = {
 	id: string;
 	score: number;
@@ -41,6 +43,12 @@ export default function AddScores() {
 		const resJson = await res.json();
 		return resJson as ScoreResult;
 	});
+	const updateScore = throttle(async (score: Score, session_id?: string) => {
+		const res = await createScore(score, session_id);
+		if (res?.success) {
+			toast.success("Saved successfully");
+		}
+	}, 500);
 	return (
 		<div>
 			<table>
@@ -65,11 +73,11 @@ export default function AddScores() {
 									<td>
 										<input
 											value={score?.score ?? ""}
-											onChange={async (e) => {
+											oninput={async (e) => {
 												const val = parseInt(e.currentTarget.value);
 												const id = test.test.id.split(":")[1];
 												if (!id || !val) return;
-												const res = await createScore(
+												updateScore(
 													{
 														test_id: id,
 														user_id: user?.user_id!,
@@ -77,7 +85,6 @@ export default function AddScores() {
 													},
 													session_id()
 												);
-												console.log(res);
 											}}
 										/>
 									</td>

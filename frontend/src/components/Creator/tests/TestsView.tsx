@@ -1,6 +1,6 @@
 import { IconTypes } from "solid-icons";
 import { ImBin } from "solid-icons/im";
-import { For, JSX, createResource, createSignal } from "solid-js";
+import { For, JSX, Show, createResource, createSignal } from "solid-js";
 import toast from "solid-toast";
 import AddTest from "~/components/AddTest/AddTest";
 import { Test } from "~/components/User/tests/UserTests";
@@ -11,13 +11,12 @@ export type GetCreatedResult = {
 	tests: Test[];
 };
 interface ViewTestsProps {
-	session_id?: string;
-	tests: GetCreatedResult;
-	updateTests: (newTests: Test[]) => void;
+	tests: Test[];
+	// updateTests: (newTests: Test[]) => void;
 	onTestClicked: (test: Test) => void;
-	onButtonClicked: (test: Test) => void;
-	buttonIcon: IconTypes;
-	buttonTitle: string;
+	onButtonClicked?: (test: Test) => void;
+	buttonIcon?: IconTypes;
+	buttonTitle?: string;
 }
 export function TestsView(props: ViewTestsProps) {
 	const tests = () => props.tests;
@@ -34,11 +33,13 @@ export function TestsView(props: ViewTestsProps) {
 					<th>
 						<h2>Assignees</h2>
 					</th>
-					<th class="w-[44px]"></th>
+					<Show when={props.buttonIcon}>
+						<th class="w-[44px]"></th>
+					</Show>
 				</tr>
 			</thead>
 			<tbody>
-				<For each={tests()?.tests}>
+				<For each={tests()}>
 					{(item) => (
 						<tr
 							onClick={() => {
@@ -48,18 +49,23 @@ export function TestsView(props: ViewTestsProps) {
 							<td class="text-xl">{item.name}</td>
 							<td class="text-xl">{item.max_score}</td>
 							<td class="text-xl">{item.assignees}</td>
-							<td>
-								<button
-									class="rounded bg-transparent border-none active:animate-jello animate-duration-75"
-									onClick={async (e) => {
-										e.stopPropagation();
-										props.onButtonClicked(item);
-									}}
-									title={props.buttonTitle}
-								>
-									<props.buttonIcon size={30} />
-								</button>
-							</td>
+							<Show when={props.buttonIcon}>
+								<td>
+									<button
+										class="rounded bg-transparent border-none active:animate-jello animate-duration-75"
+										onClick={async (e) => {
+											e.stopPropagation();
+											props.onButtonClicked?.(item);
+										}}
+										title={props.buttonTitle}
+									>
+										{(() => {
+											if (!props.buttonIcon) return;
+											return <props.buttonIcon size={30} />;
+										})()}
+									</button>
+								</td>
+							</Show>
 						</tr>
 					)}
 				</For>

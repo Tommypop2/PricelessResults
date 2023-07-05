@@ -39,7 +39,7 @@ impl JsonResult<Session<User>> for LoginResult {
                 user: Some(data.user),
             };
         }
-        Self::failure("Things failed".into())
+        Self::failure("Something went wrong".into())
     }
     fn failure(message: String) -> Self {
         Self {

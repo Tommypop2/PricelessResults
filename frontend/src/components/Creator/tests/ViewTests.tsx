@@ -27,9 +27,8 @@ export function ViewTests(props: ViewTestsProps) {
 		<>
 			<div class="relative h-full mx-2 text-left">
 				<TestsView
-					tests={tests()!}
-					updateTests={testUpdater}
-					session_id={props.session_id}
+					tests={tests()?.tests ?? []}
+					// updateTests={testUpdater}
 					onTestClicked={(test) => {}}
 					onButtonClicked={async (item) => {
 						if (

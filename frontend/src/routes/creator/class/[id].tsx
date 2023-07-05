@@ -52,9 +52,7 @@ export default function ClassView() {
 				<Container class="min-h-100">
 					<div class="relative h-full mx-2 text-left">
 						<TestsView
-							session_id={session_id()}
-							tests={allTests.latest!}
-							updateTests={() => {}}
+							tests={allTests?.latest?.tests ?? []}
 							onTestClicked={(test) => {
 								const testId = test.id.split(":")[1];
 								const classId = data()?.class.id.split(":")[1];
@@ -94,9 +92,7 @@ export default function ClassView() {
 				</Container>
 				<Container>
 					<TestsView
-						session_id={session_id()}
-						tests={allTests.latest!}
-						updateTests={() => {}}
+						tests={allTests?.latest?.tests ?? []}
 						onTestClicked={() => {}}
 						buttonIcon={IoRemoveCircleSharp}
 						buttonTitle="Assign To Class"
