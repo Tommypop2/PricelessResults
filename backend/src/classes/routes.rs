@@ -169,10 +169,8 @@ async fn read_classes(
     let classes: Vec<Class<User>> = state
         .surreal
         .db
-        .query(format!(
-            "SELECT *, creator.* FROM class WHERE creator.user_id = {}",
-            session.user.user_id
-        ))
+        .query("SELECT *, creator.* FROM class WHERE creator.user_id = $user_id")
+        .bind(("user_id", &session.user.user_id))
         .await
         .unwrap()
         .take(0)

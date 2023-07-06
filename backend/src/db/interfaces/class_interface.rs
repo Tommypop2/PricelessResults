@@ -2,7 +2,7 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
-use crate::{Record};
+use crate::Record;
 
 use super::common::{
     add_membership, clear_memberships, generate_id, CountRecord, Membership, MembershipType,

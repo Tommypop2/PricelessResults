@@ -37,7 +37,14 @@ pub async fn get_session(
     db: &Surreal<surrealdb::engine::remote::ws::Client>,
 ) -> Option<Session<User>> {
     let session: Option<Session<User>> = db
-        .query(format!("SELECT *, user.* FROM session:{session_id}"))
+        .query("SELECT *, user.* FROM $session_id")
+        .bind((
+            "session_id",
+            RecordId {
+                tb: "session".to_owned(),
+                id: session_id.into(),
+            },
+        ))
         .await
         .unwrap()
         .take(0)

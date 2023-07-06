@@ -116,10 +116,8 @@ async fn login_route(
         let mut user_response: Response = shared_data
             .surreal
             .db
-            .query(format!(
-                "SELECT * FROM user WHERE user_id = \"{}\"",
-                google_id
-            ))
+            .query("SELECT * FROM user WHERE user_id = $user_id")
+            .bind(("user_id", &google_id))
             .await
             .unwrap();
         let usr: Option<User> = user_response.take(0).unwrap();
@@ -222,9 +220,8 @@ async fn user_sessions(
     let sessions: Vec<Session<RecordId>> = state
         .surreal
         .db
-        .query(format!(
-            "SELECT * FROM session WHERE user.user_id = \"{user_id}\"",
-        ))
+        .query("SELECT * FROM session WHERE user.user_id = $user_id")
+        .bind(("user_id", &user_id))
         .await
         .unwrap()
         .take(0)

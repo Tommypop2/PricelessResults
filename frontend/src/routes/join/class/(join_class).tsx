@@ -34,5 +34,5 @@ export default function JoinClass() {
 			navigate("/user/dashboard");
 		}
 	});
-	return <></>;
+	return <div>Joining Class...</div>;
 }

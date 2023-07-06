@@ -92,9 +92,8 @@ pub async fn read_tests_fuzzy_name(
 }
 pub async fn read_owned(db: &Surreal<Client>, creator_id: &str) -> surrealdb::Result<Vec<Test>> {
     let tests: Vec<Test> = db
-        .query(format!(
-            "SELECT * FROM test WHERE creator.user_id = {creator_id}"
-        ))
+        .query("SELECT * FROM test WHERE creator.user_id = $creator_id")
+        .bind(("creator_id", &creator_id))
         .await?
         .take(0)?;
     Ok(tests)
@@ -124,17 +123,21 @@ pub async fn delete_test(
 }
 
 #[derive(Serialize, Deserialize)]
-struct TestMembership {
-    test: RecordId,
-    user: RecordId,
-    score: Option<RecordId>,
+struct TestMembership<T = RecordId, U = RecordId, S = RecordId> {
+    id: Option<RecordId>,
+    test: T,
+    user: U,
+    score: Option<S>,
+    creation_date: DateTime<Local>,
 }
 impl TestMembership {
     fn new(test: RecordId, user: RecordId, score: Option<RecordId>) -> Self {
         TestMembership {
+            id: None,
             test,
             user,
-            score: score,
+            score,
+            creation_date: Local::now(),
         }
     }
 }
@@ -195,13 +198,14 @@ pub struct TestMembershipRecord<U = RecordId, S = RecordId> {
     test: Test,
     user: U,
     score: Option<S>,
+    creation_date: DateTime<Local>,
 }
 pub async fn read_test_memberships(
     db: &Surreal<Client>,
     user_id: &str,
 ) -> surrealdb::Result<Vec<TestMembershipRecord<RecordId, Score>>> {
     let memberships: Vec<TestMembershipRecord<_, Score>> = db
-        .query("SELECT *, test.*, score.* FROM test_membership WHERE user = $user")
+        .query("SELECT *, test.*, score.* FROM test_membership WHERE user = $user ORDER BY creation_date DESC")
         .bind((
             "user",
             RecordId {
@@ -209,8 +213,8 @@ pub async fn read_test_memberships(
                 id: user_id.into(),
             },
         ))
-        .await?
-        .take(0)?;
+        .await.unwrap()
+        .take(0).unwrap();
     Ok(memberships)
 }
 pub async fn read_test_memberships_by_class(
@@ -247,13 +251,15 @@ pub async fn add_test_to_class(
 ) -> surrealdb::Result<Test> {
     // Don't like doing this, but it's necessary to avoid 2 db queries for now. Ideally, it'd be possible to extract the pure id, without any special characters from the record
     // It seems for now hashing is the only reasonable method to not include those characters in the id
-    db.query("INSERT INTO test_membership SELECT crypto::sha1(string::concat(user.id.id, test.id.id)) as id, user.id AS user, $test AS test, type::thing('score', crypto::sha1(($test).id + user.id)) AS score FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)").bind(("test", RecordId{
+
+    db.query("INSERT INTO test_membership SELECT crypto::sha1(string::concat(type::string(user.id), type::string(($test).id))) as id, user.id AS user, $test AS test, type::thing('score', crypto::sha1(string::concat(type::string(user.id), type::string(($test).id)))) AS score, $creation_date as creation_date FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)")
+    .bind(("test", RecordId{
         tb: "test".to_owned(),
         id: test_id.into()
     })).bind(("class", RecordId{
         tb: "class".to_owned(),
         id: class_id.into(),
-    })).await?;
+    })).bind(("creation_date", &Local::now())).await.unwrap();
     let count = count_members(db, test_id).await?;
     let tst = update_test(db, AssigneesCount { assignees: count }, test_id).await?;
     Ok(tst)

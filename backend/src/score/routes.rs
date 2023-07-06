@@ -82,7 +82,7 @@ async fn create_score(
     )
     .await;
     if let Ok(score) = score_res {
-        let score_id = if let Some(id) = score.id{
+        let score_id = if let Some(id) = score.id {
             id.id.to_string()
         } else {
             return Ok(ScoreResult::failure_json("No score with this id"));

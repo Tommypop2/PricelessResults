@@ -34,7 +34,8 @@ where
     for<'a> T: Deserialize<'a>,
 {
     let mut user_response: Response = db
-        .query(format!("SELECT * FROM user WHERE user_id = \"{}\"", id))
+        .query("SELECT * FROM user WHERE user_id = $user_id")
+        .bind(("user_id", id))
         .await
         .unwrap();
     user_response.take(0).unwrap()

@@ -17,39 +17,14 @@ export type TestMembershipResult = {
 	error?: string;
 };
 type TestsViewProps = {
-	session_id?: string;
+	tests?: Test[];
 };
 
 export default function ViewTests(props: TestsViewProps) {
-	const [tests] = createResource(
-		() => props.session_id,
-		async (id) => {
-			if (!id) return { success: false, memberships: [] };
-			const res = await fetch(
-				`${import.meta.env.VITE_SERVER_URI}/tests/get_assigned?session_id=${id}`
-			);
-			const resJson = (await res.json()) as TestMembershipResult;
-			console.log(resJson);
-			return resJson;
-		}
-	);
-	const mappedTests = createMemo(() =>
-		tests()?.memberships.map((m) => {
-			return { ...m.test, score: m.score?.score };
-		})
-	);
 	const navigate = useNavigate();
 	return (
-		// <div class="flex flex-col rounded-xl">
-		// 	<h2>My Tests</h2>
-		// 	<For each={tests()?.memberships}>
-		// 		{(item, i) => {
-		// 			return <div>{item.test.name}</div>;
-		// 		}}
-		// 	</For>
-		// </div>
 		<TestsView
-			tests={mappedTests() ?? []}
+			tests={props.tests ?? []}
 			onTestClicked={(test) => {
 				const id = test.id.split(":")[1];
 				if (!id) return;

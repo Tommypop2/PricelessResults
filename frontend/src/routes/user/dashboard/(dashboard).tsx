@@ -1,4 +1,10 @@
-import { onMount } from "solid-js";
+import {
+	createEffect,
+	createMemo,
+	createResource,
+	onCleanup,
+	onMount,
+} from "solid-js";
 import {
 	Chart,
 	Title,
@@ -11,20 +17,38 @@ import {
 import { Line } from "solid-chartjs";
 import ClassesView from "~/components/User/classes/UserClasses";
 import { useUserContext } from "~/context/UserProvider";
-import TestsView from "~/components/User/tests/UserTests";
+import ViewTests, {
+	TestMembershipResult,
+} from "~/components/User/tests/UserTests";
 import Container from "~/components/Container/Container";
 export default function Dashboard() {
 	const userCtx = useUserContext();
+	const [tests] = createResource(
+		() => userCtx.user()?.session_id,
+		async (id) => {
+			if (!id) return { success: false, memberships: [] };
+			const res = await fetch(
+				`${import.meta.env.VITE_SERVER_URI}/tests/get_assigned?session_id=${id}`
+			);
+			const resJson = (await res.json()) as TestMembershipResult;
+			return resJson;
+		}
+	);
+	const mappedTests = createMemo(() =>
+		tests()?.memberships?.map((m) => {
+			return { ...m.test, score: m.score?.score };
+		})
+	);
 	onMount(() => {
+		console.log(mappedTests());
 		Chart.register(Title, Tooltip, Legend, Colors);
 	});
-
-	const chartData: ChartData = {
-		labels: ["Test1", "Test2", "Test3", "Test4", "Test5"],
+	const chartData: () => ChartData = () => ({
+		xLabels: mappedTests()?.map((t) => t.name),
 		datasets: [
 			{
 				label: "Test Scores",
-				data: [80, 75, 90, 50, 72],
+				data: mappedTests()?.map((t) => (t.score! / t.max_score) * 100)!,
 				pointBackgroundColor: "yellow",
 				borderColor: "red",
 				tension: 0.2,
@@ -37,7 +61,7 @@ export default function Dashboard() {
 				tension: 0.2,
 			},
 		],
-	};
+	});
 	const chartOptions: ChartOptions = {
 		scales: {
 			y: {
@@ -58,13 +82,13 @@ export default function Dashboard() {
 	return (
 		<div class="grid grid-cols-4 p-2 gap-2">
 			<div class="transition-all ease-in-out col-span-2">
-				<Line data={chartData} options={chartOptions} />
+				<Line data={chartData()} options={chartOptions} />
 			</div>
 			<Container>
 				<ClassesView session_id={session_id()} />
 			</Container>
 			<Container>
-				<TestsView session_id={session_id()} />
+				<ViewTests tests={mappedTests()} />
 			</Container>
 			<div>Slot 4</div>
 			<div>Slot 5</div>

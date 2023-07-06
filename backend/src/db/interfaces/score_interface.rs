@@ -29,7 +29,7 @@ impl Score {
 }
 pub async fn create_score(db: &Surreal<Client>, score: &Score) -> surrealdb::Result<Score> {
     let new_score: Score = match db
-        .query("INSERT INTO score SELECT crypto::sha1(test.id + user.id) as id, * FROM $content")
+        .query("INSERT INTO score SELECT crypto::sha1(string::concat(type::string(user.id), type::string(test.id))) as id, * FROM $content")
         .bind(("content", score))
         .await?
         .take(0)?
