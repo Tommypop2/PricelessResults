@@ -79,8 +79,8 @@ export default function AddScores() {
 												if (!id || !val) return;
 												updateScore(
 													{
-														test_id: id,
-														user_id: user?.user_id!,
+														test: id,
+														user: user?.user_id!,
 														score: val,
 													},
 													session_id()

@@ -1,13 +1,16 @@
 import { For, createMemo, createResource } from "solid-js";
+import { useNavigate } from "solid-start";
 import { TestsView } from "~/components/Creator/tests/TestsView";
 import { User } from "~/context/UserProvider";
+import { Score, ScoresResult } from "~/helpers/scores/scores";
 export type Test = {
 	name: string;
 	max_score: number;
 	id: string;
 	assignees: number;
+	score?: number;
 };
-export type TestMembership = { test: Test; user?: User };
+export type TestMembership = { test: Test; user?: User; score?: Score };
 export type TestMembershipResult = {
 	success: boolean;
 	memberships: TestMembership[];
@@ -16,6 +19,7 @@ export type TestMembershipResult = {
 type TestsViewProps = {
 	session_id?: string;
 };
+
 export default function ViewTests(props: TestsViewProps) {
 	const [tests] = createResource(
 		() => props.session_id,
@@ -25,10 +29,16 @@ export default function ViewTests(props: TestsViewProps) {
 				`${import.meta.env.VITE_SERVER_URI}/tests/get_assigned?session_id=${id}`
 			);
 			const resJson = (await res.json()) as TestMembershipResult;
+			console.log(resJson);
 			return resJson;
 		}
 	);
-	const mappedTests = createMemo(() => tests()?.memberships.map((m) => m.test));
+	const mappedTests = createMemo(() =>
+		tests()?.memberships.map((m) => {
+			return { ...m.test, score: m.score?.score };
+		})
+	);
+	const navigate = useNavigate();
 	return (
 		// <div class="flex flex-col rounded-xl">
 		// 	<h2>My Tests</h2>
@@ -38,6 +48,13 @@ export default function ViewTests(props: TestsViewProps) {
 		// 		}}
 		// 	</For>
 		// </div>
-		<TestsView tests={mappedTests() ?? []} onTestClicked={() => {}}></TestsView>
+		<TestsView
+			tests={mappedTests() ?? []}
+			onTestClicked={(test) => {
+				const id = test.id.split(":")[1];
+				if (!id) return;
+				navigate(`/user/test/${id}`);
+			}}
+		/>
 	);
 }

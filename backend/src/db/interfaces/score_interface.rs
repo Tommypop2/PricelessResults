@@ -2,9 +2,7 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
-use super::common::generate_id;
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Score<T = RecordId, U = RecordId> {
     pub id: Option<RecordId>,
     pub score: Option<u32>,
@@ -30,31 +28,89 @@ impl Score {
     }
 }
 pub async fn create_score(db: &Surreal<Client>, score: &Score) -> surrealdb::Result<Score> {
-    let new_score: Score = db
-        .create((
-            "score",
-            &generate_id(&score.user.id.to_string(), &score.test.id.to_string()),
-        ))
-        .content(score)
-        .await?;
+    let new_score: Score = match db
+        .query("INSERT INTO score SELECT crypto::sha1(test.id + user.id) as id, * FROM $content")
+        .bind(("content", score))
+        .await?
+        .take(0)?
+    {
+        Some(score) => score,
+        None => {
+            return Err(surrealdb::Error::Api(surrealdb::error::Api::InternalError(
+                "Score not properly returned".to_owned(),
+            )))
+        }
+    };
+    dbg!("This has executed");
     Ok(new_score)
 }
-pub async fn read_score(db: &Surreal<Client>, score_id: &str) -> surrealdb::Result<Score> {
+pub async fn read_score_by_id(db: &Surreal<Client>, score_id: &str) -> surrealdb::Result<Score> {
     let score: Score = db.select(("score", score_id)).await?;
     Ok(score)
 }
-pub async fn read_scores(db: &Surreal<Client>, test_id: &str) -> surrealdb::Result<Vec<Score>> {
-    let scores: Vec<Score> = db
-        .query("SELECT * FROM score WHERE test = $test")
-        .bind((
-            "test",
-            RecordId {
-                tb: "test".to_owned(),
-                id: test_id.into(),
-            },
-        ))
-        .await?
-        .take(0)?;
+pub async fn read_score<'a>(
+    db: &Surreal<Client>,
+    query: ReadScores<'a>,
+) -> surrealdb::Result<Score> {
+    let res = read_scores(db, query).await?;
+    if res.is_empty() {
+        return Err(surrealdb::Error::Api(surrealdb::error::Api::InternalError(
+            "No scores present".to_owned(),
+        )));
+    }
+    Ok(res[0].clone())
+}
+pub enum ReadScores<'a> {
+    TestId(&'a str),
+    UserId(&'a str),
+    Both(&'a str, &'a str),
+}
+pub async fn read_scores<'a>(
+    db: &Surreal<Client>,
+    query: ReadScores<'a>,
+) -> surrealdb::Result<Vec<Score>> {
+    let scores: Vec<Score> = match query {
+        ReadScores::TestId(test_id) => db
+            .query("SELECT * FROM score WHERE test = $test")
+            .bind((
+                "test",
+                RecordId {
+                    tb: "test".to_owned(),
+                    id: test_id.into(),
+                },
+            ))
+            .await?
+            .take(0)?,
+        ReadScores::UserId(user_id) => db
+            .query("SELECT * FROM score WHERE user = $user")
+            .bind((
+                "user",
+                RecordId {
+                    tb: "user".to_owned(),
+                    id: user_id.into(),
+                },
+            ))
+            .await?
+            .take(0)?,
+        ReadScores::Both(user_id, test_id) => db
+            .query("SELECT * FROM score WHERE user = $user AND test = $test")
+            .bind((
+                "user",
+                RecordId {
+                    tb: "user".to_owned(),
+                    id: user_id.into(),
+                },
+            ))
+            .bind((
+                "test",
+                RecordId {
+                    tb: "test".to_owned(),
+                    id: test_id.into(),
+                },
+            ))
+            .await?
+            .take(0)?,
+    };
     Ok(scores)
 }
 pub async fn update_score<T: Serialize>(

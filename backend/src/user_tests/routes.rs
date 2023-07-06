@@ -183,13 +183,13 @@ async fn assign_test(
     Ok(TestResult::failure_json("No class_id or user_id provided"))
 }
 #[derive(Serialize, Deserialize)]
-struct TestMembershipRecordsResult<U> {
+struct TestMembershipRecordsResult<U, S> {
     success: bool,
     error: Option<String>,
-    memberships: Option<Vec<TestMembershipRecord<U>>>,
+    memberships: Option<Vec<TestMembershipRecord<U, S>>>,
 }
-impl<U> JsonResult<Vec<TestMembershipRecord<U>>> for TestMembershipRecordsResult<U> {
-    fn success(record: Vec<TestMembershipRecord<U>>) -> Self {
+impl<U, S> JsonResult<Vec<TestMembershipRecord<U, S>>> for TestMembershipRecordsResult<U, S> {
+    fn success(record: Vec<TestMembershipRecord<U, S>>) -> Self {
         Self {
             success: true,
             error: None,

@@ -22,7 +22,7 @@ impl<T> MembershipType<T> {
     }
 }
 pub trait Membership {
-    fn create_membership(user: RecordId, group: RecordId) -> MembershipType<Self>
+    fn create_membership(record: Self) -> MembershipType<Self>
     where
         Self: std::marker::Sized;
 }

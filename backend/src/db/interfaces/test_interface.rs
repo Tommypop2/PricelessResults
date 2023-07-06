@@ -8,6 +8,7 @@ use super::{
     common::{
         add_membership, clear_memberships, generate_id, CountRecord, Membership, MembershipType,
     },
+    score_interface::Score,
     user_interface::User,
 };
 #[derive(Serialize, Deserialize, Debug)]
@@ -126,24 +127,31 @@ pub async fn delete_test(
 struct TestMembership {
     test: RecordId,
     user: RecordId,
+    score: Option<RecordId>,
+}
+impl TestMembership {
+    fn new(test: RecordId, user: RecordId, score: Option<RecordId>) -> Self {
+        TestMembership {
+            test,
+            user,
+            score: score,
+        }
+    }
 }
 impl Membership for TestMembership {
-    fn create_membership(user: RecordId, group: RecordId) -> MembershipType<Self>
+    fn create_membership(record: Self) -> MembershipType<Self>
     where
         Self: std::marker::Sized,
     {
-        let membership = TestMembership {
-            test: group.clone(),
-            user: user.clone(),
-        };
+        let user_id = &record.user.id.to_string();
+        let group_id = &record.test.id.to_string();
         MembershipType::new(
-            membership,
-            generate_id(&group.id.to_string(), &user.id.to_string()),
+            record,
+            generate_id(user_id, group_id),
             "test_membership".to_owned(),
         )
     }
 }
-
 pub async fn add_test_member(
     db: &Surreal<Client>,
     test_id: &String,
@@ -161,7 +169,7 @@ pub async fn add_test_member(
         return Ok(());
     }
     // Add membership
-    let membership = TestMembership::create_membership(
+    let membership = TestMembership::create_membership(TestMembership::new(
         RecordId {
             tb: "user".to_owned(),
             id: user_id.into(),
@@ -170,23 +178,30 @@ pub async fn add_test_member(
             tb: "class".to_owned(),
             id: test_id.into(),
         },
-    );
+        // TODO: Fix this
+        None,
+        // RecordId{
+        //     tb: "score".to_owned(),
+        //     id: generate_id(user_id, test_id).into(),
+        // }
+    ));
     add_membership(db, membership).await?;
     Ok(())
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct TestMembershipRecord<U = RecordId> {
+pub struct TestMembershipRecord<U = RecordId, S = RecordId> {
     id: RecordId,
     test: Test,
     user: U,
+    score: Option<S>,
 }
 pub async fn read_test_memberships(
     db: &Surreal<Client>,
     user_id: &str,
-) -> surrealdb::Result<Vec<TestMembershipRecord>> {
-    let memberships: Vec<TestMembershipRecord> = db
-        .query("SELECT *, test.* FROM test_membership WHERE user = $user")
+) -> surrealdb::Result<Vec<TestMembershipRecord<RecordId, Score>>> {
+    let memberships: Vec<TestMembershipRecord<_, Score>> = db
+        .query("SELECT *, test.*, score.* FROM test_membership WHERE user = $user")
         .bind((
             "user",
             RecordId {
@@ -232,7 +247,7 @@ pub async fn add_test_to_class(
 ) -> surrealdb::Result<Test> {
     // Don't like doing this, but it's necessary to avoid 2 db queries for now. Ideally, it'd be possible to extract the pure id, without any special characters from the record
     // It seems for now hashing is the only reasonable method to not include those characters in the id
-    db.query("INSERT INTO test_membership SELECT crypto::sha1(string::concat(user.id.id, test.id.id)) as id, user.id AS user, $test AS test FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)").bind(("test", RecordId{
+    db.query("INSERT INTO test_membership SELECT crypto::sha1(string::concat(user.id.id, test.id.id)) as id, user.id AS user, $test AS test, type::thing('score', crypto::sha1(($test).id + user.id)) AS score FROM (SELECT user.id, class.id FROM class_membership WHERE class.id = $class)").bind(("test", RecordId{
         tb: "test".to_owned(),
         id: test_id.into()
     })).bind(("class", RecordId{

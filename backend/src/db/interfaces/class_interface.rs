@@ -2,7 +2,7 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use surrealdb::{engine::remote::ws::Client, opt::RecordId, Surreal};
 
-use crate::Record;
+use crate::{Record};
 
 use super::common::{
     add_membership, clear_memberships, generate_id, CountRecord, Membership, MembershipType,
@@ -119,18 +119,30 @@ struct ClassMembership {
 // This is completely over-engineered, it's just so the membership records have different group names, rather than just storing as:
 // {user: RecordId, group: RecordId}
 // But the records can be created as if they were
+impl ClassMembership {
+    fn new(user_id: &str, class_id: &str) -> Self {
+        Self {
+            class: RecordId {
+                tb: "class".to_owned(),
+                id: class_id.into(),
+            },
+            user: RecordId {
+                tb: "user".to_owned(),
+                id: user_id.into(),
+            },
+        }
+    }
+}
 impl Membership for ClassMembership {
-    fn create_membership(user: RecordId, group: RecordId) -> MembershipType<Self>
+    fn create_membership(record: Self) -> MembershipType<Self>
     where
         Self: std::marker::Sized,
     {
-        let membership = ClassMembership {
-            class: group.clone(),
-            user: user.clone(),
-        };
+        let user_id = &record.user.id.to_string();
+        let group_id = &record.class.id.to_string();
         MembershipType::new(
-            membership,
-            generate_id(&group.id.to_string(), &user.id.to_string()),
+            record,
+            generate_id(user_id, group_id),
             "class_membership".to_owned(),
         )
     }
@@ -156,16 +168,7 @@ pub async fn add_member(
         None => {}
     }
     // Add membership
-    let membership = ClassMembership::create_membership(
-        RecordId {
-            tb: "user".to_owned(),
-            id: user_id.into(),
-        },
-        RecordId {
-            tb: "class".to_owned(),
-            id: class_id.into(),
-        },
-    );
+    let membership = ClassMembership::create_membership(ClassMembership::new(user_id, class_id));
     add_membership(db, membership).await?;
     let count = count_members(db, class_id).await?;
     update_class(db, MembersCount { members: count }, class_id).await?;

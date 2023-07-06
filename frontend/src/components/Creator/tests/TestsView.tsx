@@ -1,6 +1,13 @@
 import { IconTypes } from "solid-icons";
 import { ImBin } from "solid-icons/im";
-import { For, JSX, Show, createResource, createSignal } from "solid-js";
+import {
+	For,
+	JSX,
+	Show,
+	createMemo,
+	createResource,
+	createSignal,
+} from "solid-js";
 import toast from "solid-toast";
 import AddTest from "~/components/AddTest/AddTest";
 import { Test } from "~/components/User/tests/UserTests";
@@ -20,6 +27,12 @@ interface ViewTestsProps {
 }
 export function TestsView(props: ViewTestsProps) {
 	const tests = () => props.tests;
+	const includesScores = createMemo(() => {
+		for (const test of tests()) {
+			if (test.score) return true;
+		}
+		return false;
+	});
 	return (
 		<table class="w-full">
 			<thead>
@@ -33,6 +46,11 @@ export function TestsView(props: ViewTestsProps) {
 					<th>
 						<h2>Assignees</h2>
 					</th>
+					<Show when={includesScores()}>
+						<th>
+							<h2>Score</h2>
+						</th>
+					</Show>
 					<Show when={props.buttonIcon}>
 						<th class="w-[44px]"></th>
 					</Show>
@@ -49,6 +67,9 @@ export function TestsView(props: ViewTestsProps) {
 							<td class="text-xl">{item.name}</td>
 							<td class="text-xl">{item.max_score}</td>
 							<td class="text-xl">{item.assignees}</td>
+							<Show when={includesScores()}>
+								<td class="text-xl">{item.score}</td>
+							</Show>
 							<Show when={props.buttonIcon}>
 								<td>
 									<button
