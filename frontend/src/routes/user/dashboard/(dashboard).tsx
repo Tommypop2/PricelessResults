@@ -40,7 +40,6 @@ export default function Dashboard() {
 		})
 	);
 	onMount(() => {
-		console.log(mappedTests());
 		Chart.register(Title, Tooltip, Legend, Colors);
 	});
 	const chartData: () => ChartData = () => ({

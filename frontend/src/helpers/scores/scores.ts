@@ -14,7 +14,6 @@ export interface ScoresResult extends Result {
 export async function createScore(score: Score, session_id?: string) {
 	if (!session_id) return null;
 	const data = { ...score, session_id };
-	console.log(data);
 	const res = await (
 		await fetch(`${import.meta.env.VITE_SERVER_URI}/score/create`, {
 			credentials: "include",
