@@ -2,7 +2,7 @@
 
 ## About
 
-The backend server for the Priceless Results system
+The backend server for the Priceless Results system. This is currently WIP, so many of the API routes aren't entirely guarded
 
 ## How to build and run
 
