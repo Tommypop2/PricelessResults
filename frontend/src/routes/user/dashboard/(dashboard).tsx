@@ -47,7 +47,9 @@ export default function Dashboard() {
 		datasets: [
 			{
 				label: "Test Scores",
-				data: mappedTests()?.map((t) => (t.score! / t.max_score) * 100)!,
+				data: mappedTests()?.map((t) =>
+					t.score ? (t.score / t.max_score) * 100 : null
+				)!,
 				pointBackgroundColor: "yellow",
 				borderColor: "red",
 				tension: 0.2,
