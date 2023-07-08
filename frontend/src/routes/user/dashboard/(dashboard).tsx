@@ -1,4 +1,5 @@
 import {
+	Suspense,
 	createEffect,
 	createMemo,
 	createResource,
@@ -60,16 +61,16 @@ export default function Dashboard() {
 	onMount(() => {
 		Chart.register(Title, Tooltip, Legend, Colors);
 	});
-	const pairs = createMemo(() =>
+	const pairs = () =>
 		tests()?.map((t) => {
 			const corresponding = averages()?.find((a) => a.test.id === t.id);
 			return {
 				test: t,
 				mean: corresponding ? corresponding.mean_score : null,
 			};
-		})
-	);
-	const pointBgColour = () => themeCtx.theme() === "dark" ? "white" : "black";
+		});
+
+	const pointBgColour = () => (themeCtx.theme() === "dark" ? "white" : "black");
 	const chartData: () => ChartData = () => ({
 		xLabels: pairs()?.map((p) => p.test.name),
 		datasets: [
@@ -114,13 +115,19 @@ export default function Dashboard() {
 	return (
 		<div class="grid grid-cols-4 p-2 gap-2">
 			<div class="transition-all ease-in-out col-span-2">
-				<Line data={chartData()} options={chartOptions} />
+				<Suspense>
+					<Line data={chartData()} options={chartOptions} />
+				</Suspense>
 			</div>
 			<Container class="text-left">
-				<ClassesView session_id={session_id()} />
+				<Suspense>
+					<ClassesView session_id={session_id()} />
+				</Suspense>
 			</Container>
 			<Container class="text-left">
-				<ViewTests tests={tests()} />
+				<Suspense>
+					<ViewTests tests={tests()} />
+				</Suspense>
 			</Container>
 			<div>Slot 4</div>
 			<div>Slot 5</div>
