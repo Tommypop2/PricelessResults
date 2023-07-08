@@ -112,7 +112,9 @@ export default function Dashboard() {
 		maintainAspectRatio: false,
 	};
 	const session_id = () => userCtx.user()?.session_id;
-	const reversedTests = createMemo(() => structuredClone(tests()?.reverse()));
+	const reversedTests = createMemo(() =>
+		tests() ? [...tests()!.reverse()] : undefined
+	);
 	return (
 		<div class="grid grid-cols-4 p-2 gap-2">
 			<div class="transition-all ease-in-out col-span-2">
