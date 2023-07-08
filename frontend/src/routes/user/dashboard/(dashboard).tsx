@@ -112,6 +112,7 @@ export default function Dashboard() {
 		maintainAspectRatio: false,
 	};
 	const session_id = () => userCtx.user()?.session_id;
+	const reversedTests = createMemo(() => structuredClone(tests()?.reverse()));
 	return (
 		<div class="grid grid-cols-4 p-2 gap-2">
 			<div class="transition-all ease-in-out col-span-2">
@@ -126,7 +127,7 @@ export default function Dashboard() {
 			</Container>
 			<Container class="text-left">
 				<Suspense>
-					<ViewTests tests={tests()?.reverse()} />
+					<ViewTests tests={reversedTests()} />
 				</Suspense>
 			</Container>
 			<div>Slot 4</div>
