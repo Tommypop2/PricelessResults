@@ -41,7 +41,6 @@ pub async fn create_score(db: &Surreal<Client>, score: &Score) -> surrealdb::Res
             )))
         }
     };
-    dbg!("This has executed");
     Ok(new_score)
 }
 pub async fn read_score_by_id(db: &Surreal<Client>, score_id: &str) -> surrealdb::Result<Score> {

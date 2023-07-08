@@ -72,7 +72,7 @@ async fn main() -> std::io::Result<()> {
             .service(web::scope("/score").configure(score_routes))
             .service(web::scope("/statistics").configure(statistics_routes))
     })
-    .bind(("0.0.0.0", 8088))?
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }

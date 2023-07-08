@@ -205,7 +205,7 @@ pub async fn read_test_memberships(
     user_id: &str,
 ) -> surrealdb::Result<Vec<TestMembershipRecord<RecordId, Score>>> {
     let memberships: Vec<TestMembershipRecord<_, Score>> = db
-        .query("SELECT *, test.*, score.* FROM test_membership WHERE user = $user ORDER BY creation_date DESC")
+        .query("SELECT *, test.*, score.* FROM test_membership WHERE user = $user ORDER BY creation_date ASC")
         .bind((
             "user",
             RecordId {
