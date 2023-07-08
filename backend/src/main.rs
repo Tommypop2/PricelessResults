@@ -45,6 +45,7 @@ async fn main() -> std::io::Result<()> {
     dotenv().ok();
     let client_id = std::env::var("client_id").expect("client_id variable should be set");
     let db_url = std::env::var("db_url").expect("db_url variable should be set");
+    println!("Connecting to db at url: {}", db_url);
     let surreal = SurrealDBRepo::init(&db_url)
         .await
         .expect("Error connecting to SurrealDB!");
