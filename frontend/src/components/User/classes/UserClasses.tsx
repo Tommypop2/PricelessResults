@@ -26,7 +26,7 @@ export default function ClassesView(props: ClasesViewProps) {
 			<table>
 				<thead>
 					<tr>
-						<th class="w-[100%]">
+						<th>
 							<h2>My Classes</h2>
 						</th>
 						<th>

@@ -22,8 +22,10 @@ import ViewTests, {
 	TestMembershipResult,
 } from "~/components/User/tests/UserTests";
 import Container from "~/components/Container/Container";
+import { useThemeContext } from "~/context/ThemeProvider";
 export default function Dashboard() {
 	const userCtx = useUserContext();
+	const themeCtx = useThemeContext();
 	// User scores
 	const [testsRes] = createResource(
 		() => userCtx.user()?.session_id,
@@ -45,7 +47,7 @@ export default function Dashboard() {
 	const [averages] = createResource(
 		() => userCtx.user()?.session_id,
 		async (id) => {
-			const class_id = "6a0mmlgvekhvkkdjq3lg";
+			const class_id = "qd9pnvtq0bdd6zppowqu";
 			const res = await fetch(
 				`${
 					import.meta.env.VITE_SERVER_URI
@@ -67,6 +69,7 @@ export default function Dashboard() {
 			};
 		})
 	);
+	const pointBgColour = () => themeCtx.theme() === "dark" ? "white" : "black";
 	const chartData: () => ChartData = () => ({
 		xLabels: pairs()?.map((p) => p.test.name),
 		datasets: [
@@ -75,7 +78,7 @@ export default function Dashboard() {
 				data: pairs()?.map((t) =>
 					t.test.score ? (t.test.score / t.test.max_score) * 100 : null
 				)!,
-				pointBackgroundColor: "yellow",
+				pointBackgroundColor: pointBgColour(),
 				borderColor: "red",
 				tension: 0.2,
 			},
@@ -85,8 +88,8 @@ export default function Dashboard() {
 					pairs()?.map((t) => {
 						return t.mean ? (t.mean / t.test.max_score) * 100 : null;
 					}) ?? [],
-				pointBackgroundColor: "yellow",
-				borderColor: "green",
+				pointBackgroundColor: pointBgColour(),
+				borderColor: "blue",
 				tension: 0.2,
 			},
 		],
@@ -113,10 +116,10 @@ export default function Dashboard() {
 			<div class="transition-all ease-in-out col-span-2">
 				<Line data={chartData()} options={chartOptions} />
 			</div>
-			<Container>
+			<Container class="text-left">
 				<ClassesView session_id={session_id()} />
 			</Container>
-			<Container>
+			<Container class="text-left">
 				<ViewTests tests={tests()} />
 			</Container>
 			<div>Slot 4</div>
