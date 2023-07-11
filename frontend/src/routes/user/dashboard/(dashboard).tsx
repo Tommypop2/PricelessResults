@@ -48,7 +48,7 @@ export default function Dashboard() {
 	const [averages] = createResource(
 		() => userCtx.user()?.session_id,
 		async (id) => {
-			const class_id = "qd9pnvtq0bdd6zppowqu";
+			const class_id = "4v5g3wibgnmff9za20lg";
 			const res = await fetch(
 				`${
 					import.meta.env.VITE_SERVER_URI
